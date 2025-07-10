@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import copy
 from typing import Dict, Any, TypedDict, Optional
 import json
 
@@ -47,18 +48,35 @@ class Config:
 
   def __init__(self, path: str):
     self.path = path
+    self.cfg = ConfigType(
+      cat=AnimalConfig(
+        name="TheCatAPI",
+        api_key="",
+        twitter=TwitterConfig(enabled=False, username="", consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
+        tumblr=TumblrConfig(enabled=False, blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
+        bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
+      ),
+      dog=AnimalConfig(
+        name="TheDogAPI",
+        api_key="",
+        twitter=TwitterConfig(enabled=False, username="", consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
+        tumblr=TumblrConfig(enabled=False, blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
+        bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
+      )
+    )
+
     self.load()
 
   def save(self):
-    with open(self.path, "w") as f:
-      json.dump(self.cfg, f, indent=2)
+    with open(self.path, "w", encoding="utf-8") as f:
+      json.dump(self.cfg, f, indent=2, ensure_ascii=False)
 
   def load(self):
     if not os.path.exists(self.path):
       self.save()
       return
 
-    with open(self.path, "r") as f:
+    with open(self.path, "r", encoding="utf-8") as f:
       loaded_cfg = json.load(f)
 
     cat_config = loaded_cfg.get("cat", {})
@@ -71,6 +89,7 @@ class Config:
     dog_tumblr = dog_config.get("tumblr", {})
     dog_bluesky = dog_config.get("bluesky", {})
 
+    old_cfg = copy.deepcopy(self.cfg)
     self.cfg = ConfigType(
       cat=AnimalConfig(
         name=cat_config.get("name", "TheCatAPI"),
@@ -124,70 +143,10 @@ class Config:
       )
     )
 
+    if old_cfg != self.cfg:
+      self.save()
+
   def __str__(self) -> str:
-    return json.dumps(self.cfg, indent=2)
+    return json.dumps(self.cfg, indent=2, ensure_ascii=False)
 
-
-# Example usage
-config_data = ConfigType(
-  cat=AnimalConfig(
-    name="TheCatAPI",
-    api_key="",
-    twitter=TwitterConfig(
-      enabled=False,
-      username="",
-      consumer_key="",
-      consumer_secret="",
-      access_token="",
-      access_token_secret="",
-    ),
-    tumblr=TumblrConfig(
-      enabled=False,
-      blogname="",
-      consumer_key="",
-      consumer_secret="",
-      oauth_token="",
-      oauth_token_secret="",
-    ),
-    bluesky=BlueskyConfig(
-      enabled=False,
-      username="",
-      app_password=""
-    )
-  ),
-  dog=AnimalConfig(
-    name="TheDogAPI",
-    api_key="",
-    twitter=TwitterConfig(
-      enabled=False,
-      username="",
-      consumer_key="",
-      consumer_secret="",
-      access_token="",
-      access_token_secret="",
-    ),
-    tumblr=TumblrConfig(
-      enabled=False,
-      blogname="",
-      consumer_key="",
-      consumer_secret="",
-      oauth_token="",
-      oauth_token_secret="",
-    ),
-    bluesky=BlueskyConfig(
-      enabled=False,
-      username="",
-      app_password=""
-    )
-  )
-)
 config = Config("config.json")
-
-# Access typed fields example
-twitter_enabled = config.cfg["cat"]["twitter"]["enabled"]
-twitter_username = config.cfg["dog"]["twitter"]["username"]
-
-print(twitter_enabled)
-print(twitter_username)
-# Print stringified config
-print(str(config))
