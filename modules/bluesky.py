@@ -11,8 +11,8 @@ def bluesky():
 	try:
 		bs = Client()
 		bs.login(
-			login = cfg.get('bluesky.username'),
-			password = cfg.get('bluesky.app_password')
+			login = cfg.cfg['cat']['bluesky']['username'],
+			password = cfg.cfg['cat']['bluesky']['app_password']
 		)
 	except Exception:
 		log.error('Failed to create Bluesky client.')
@@ -30,7 +30,7 @@ def bluesky():
 		)
 
 		url = res.uri.split('app.bsky.feed.')[1]
-		log.success(f'Posted image to Bluesky! Link: https://bsky.app/profile/{cfg.get("bluesky.username")}/{url}')
+		log.success(f'Posted image to Bluesky! Link: https://bsky.app/profile/{cfg.cfg["cat"]["bluesky"]["username"]}/{url}')
 		return True
 	except Exception:
 		log.error(f'Failed to send image to Bluesky: {traceback.format_exc()}')

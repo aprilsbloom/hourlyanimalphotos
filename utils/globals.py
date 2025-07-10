@@ -15,38 +15,4 @@ BASE_HEADERS: Final = {
 }
 
 log = Logger()
-cfg = Config(
-	logger=log,
-	path="config.json",
-	default={
-		"catapi-key": "",
-		"twitter": {
-			"enabled": False,
-			"username": "",
-			"consumer_key": "",
-			"consumer_secret": "",
-			"access_token": "",
-			"access_token_secret": "",
-		},
-		"tumblr": {
-			"enabled": False,
-			"blogname": "",
-			"consumer_key": "",
-			"consumer_secret": "",
-			"oauth_token": "",
-			"oauth_token_secret": "",
-		},
-		"mastodon": {
-			"enabled": False,
-			"api_url": "",
-			"client_id": "",
-			"client_secret": "",
-			"access_token": "",
-		},
-		"bluesky": {
-			"enabled": False,
-			"username": "",
-			"app_password": "",
-		}
-	},
-)
+cfg = Config("config.json")

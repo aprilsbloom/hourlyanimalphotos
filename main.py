@@ -6,7 +6,7 @@ import filetype
 import requests
 from PIL import Image
 
-from modules import bluesky, mastodon, tumblr, twitter
+from modules import bluesky, tumblr, twitter
 from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
 
 retry_count = 0
@@ -15,10 +15,9 @@ async def fetch_img():
 
 	# ensure at least one site is enabled otherwise we're wasting our time
 	if (
-		not cfg.get('twitter.enabled') and
-		not cfg.get('mastodon.enabled') and
-		not cfg.get('tumblr.enabled') and
-		not cfg.get('bluesky.enabled')
+		not cfg.cfg['cat']['twitter']['enabled'] and
+		not cfg.cfg['cat']['tumblr']['enabled'] and
+		not cfg.cfg['cat']['bluesky']['enabled']
 	):
 		log.error('No sites are enabled. Please enable at least one site in config.json.')
 		return
@@ -26,7 +25,7 @@ async def fetch_img():
 	log.info('Fetching image from https://thecatapi.com')
 	res = requests.get(
 		url = 'https://api.thecatapi.com/v1/images/search?mime_types=jpg,png',
-		headers = { 'x-api-key': cfg.get('catapi-key') }
+		headers = { 'x-api-key': cfg.cfg['cat']['api_key'] }
 	)
 
 	try:
@@ -95,25 +94,19 @@ async def fetch_img():
 		return False
 
 	# if everything is successful, post the image to all the platforms
-	if cfg.get('twitter.enabled'):
+	if cfg.cfg['cat']['twitter']['enabled']:
 		try:
 			twitter()
 		except Exception:
 			log.error('Failed to post to Twitter.')
 
-	if cfg.get('tumblr.enabled'):
+	if cfg.cfg['cat']['tumblr']['enabled']:
 		try:
 			tumblr()
 		except Exception:
 			log.error('Failed to post to Tumblr.')
 
-	if cfg.get('mastodon.enabled'):
-		try:
-			mastodon()
-		except Exception:
-			log.error('Failed to post to Mastodon.')
-
-	if cfg.get('bluesky.enabled'):
+	if cfg.cfg['cat']['bluesky']['enabled']:
 		try:
 			bluesky()
 		except Exception:

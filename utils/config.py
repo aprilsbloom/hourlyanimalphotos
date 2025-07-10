@@ -148,5 +148,3 @@ class Config:
 
   def __str__(self) -> str:
     return json.dumps(self.cfg, indent=2, ensure_ascii=False)
-
-config = Config("config.json")

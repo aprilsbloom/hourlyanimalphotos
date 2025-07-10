@@ -10,10 +10,10 @@ from utils.globals import IMG_PATH, cfg, log
 @retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
 def twitter():
 	try:
-		consumer_key = cfg.get('twitter.consumer_key')
-		consumer_secret = cfg.get('twitter.consumer_secret')
-		access_token = cfg.get('twitter.access_token')
-		access_token_secret = cfg.get('twitter.access_token_secret')
+		consumer_key = cfg.cfg['cat']['twitter']['consumer_key']
+		consumer_secret = cfg.cfg['cat']['twitter']['consumer_secret']
+		access_token = cfg.cfg['cat']['twitter']['access_token']
+		access_token_secret = cfg.cfg['cat']['twitter']['access_token_secret']
 
 		auth = tweepy.OAuth1UserHandler(
 			consumer_key = consumer_key,
