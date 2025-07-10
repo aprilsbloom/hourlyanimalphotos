@@ -1,17 +1,36 @@
 import asyncio
 import os
 from datetime import datetime, timedelta
+from typing import List
 
 import filetype
 import requests
 from PIL import Image
 
 from modules import bluesky, tumblr, twitter
+from sources import CatAPI, DogAPI, ImageSource
 from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
 
 retry_count = 0
-async def fetch_img():
+async def post():
+	sources: List[ImageSource] = [
+		CatAPI(cfg),
+		DogAPI(cfg),
+	]
+
+	for source in sources:
+		img = source.fetch_img()
+		if not img:
+			log.error(f'Failed to fetch image from {source.cfg_key}.')
+			continue
+
+		img_type = filetype.guess(img)
+		if img_type is None or img_type.extension not in IMG_EXTENSIONS:
+			log.error(f'The {source.name} returned an invalid image.')
+			continue
+
 	global retry_count
+	retry_count = 0
 
 	# ensure at least one site is enabled otherwise we're wasting our time
 	if (
@@ -36,7 +55,7 @@ async def fetch_img():
 			log.info('Retrying...')
 			retry_count += 1
 
-			await fetch_img()
+			await post()
 		else:
 			log.error('Reached retry limit, giving up.')
 
@@ -120,7 +139,7 @@ async def main():
 		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second, microseconds=-current_time.microsecond)
 		log.info(f'Posting at: {goal_timestamp.strftime("%H:%M:%S")}')
 		await asyncio.sleep((goal_timestamp - current_time).total_seconds())
-		await fetch_img()
+		await post()
 
 if __name__ == '__main__':
 	asyncio.run(main())
