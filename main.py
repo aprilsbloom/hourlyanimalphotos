@@ -11,6 +11,8 @@ from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
 
 retry_count = 0
 async def fetch_img():
+	global retry_count
+
 	# ensure at least one site is enabled otherwise we're wasting our time
 	if (
 		not cfg.get('twitter.enabled') and
@@ -33,8 +35,6 @@ async def fetch_img():
 		log.error('Failed to fetch image.')
 		if retry_count == 3:
 			log.info('Retrying...')
-
-			global retry_count
 			retry_count += 1
 
 			await fetch_img()
