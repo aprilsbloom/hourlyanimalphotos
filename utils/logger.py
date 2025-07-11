@@ -19,14 +19,14 @@ class Logger:
     time = datetime.now().strftime("%H:%M:%S")
     return f"[{time}]"
 
-  def info(self, text):
-    print(f"{self.fetch_time()} [{self.name}] {colors['grey']}[~]{colors['reset']} {text}")
+  def info(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['grey']}[~]{colors['reset']}", *args, **kwargs)
 
-  def error(self, text):
-    print(f"{self.fetch_time()} [{self.name}] {colors['red']}[-]{colors['reset']} {text}")
+  def error(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['red']}[-]{colors['reset']}", *args, **kwargs)
 
-  def warning(self, text):
-    print(f"{self.fetch_time()} [{self.name}] {colors['yellow']}[!]{colors['reset']} {text}")
+  def warning(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['yellow']}[!]{colors['reset']}", *args, **kwargs)
 
-  def success(self, text):
-    print(f"{self.fetch_time()} [{self.name}] {colors['green']}[+]{colors['reset']} {text}")
+  def success(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['green']}[+]{colors['reset']}", *args, **kwargs)

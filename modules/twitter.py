@@ -37,8 +37,7 @@ def twitter(cfg: AnimalConfig, img: SourceImage):
 			access_token_secret=access_token_secret
 		)
 	except Exception:
-		log.error('An error occurred while authenticating:')
-		log.error(traceback.format_exc())
+		log.error('An error occurred while authenticating:', traceback.format_exc())
 		log.info('Retrying')
 		return
 
@@ -47,8 +46,7 @@ def twitter(cfg: AnimalConfig, img: SourceImage):
 	try:
 		img = v1.chunked_upload(filename=str(img.path), media_category="tweet_image").media_id_string
 	except Exception:
-		log.error('An error occured while uploading the image:')
-		log.error(traceback.format_exc())
+		log.error('An error occured while uploading the image:', traceback.format_exc())
 		log.info('Retrying')
 		return
 
@@ -62,8 +60,7 @@ def twitter(cfg: AnimalConfig, img: SourceImage):
 		log.error('Rate limit exceeded! Skipping post')
 		return True
 	except Exception:
-		log.error('An error occured while posting the image (exception):')
-		log.error(traceback.format_exc())
+		log.error('An error occured while posting the image (exception):', traceback.format_exc())
 		log.info('Retrying')
 		return
 
@@ -72,6 +69,5 @@ def twitter(cfg: AnimalConfig, img: SourceImage):
 		log.success(f'Posted image! Link: https://x.com/i/status/{response.data["id"]}') # type: ignore
 		return True
 	else:
-		log.error('An error occurred while posting the image (response):')
-		print(response.errors) # type: ignore
+		log.error('An error occurred while posting the image (response):', response.errors) # type: ignore
 		return

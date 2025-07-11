@@ -24,8 +24,7 @@ def tumblr(cfg: AnimalConfig, img: SourceImage):
 			oauth_secret = cfg['tumblr']['oauth_token_secret']
 		)
 	except Exception:
-		log.error('An error occurred while authenticating:')
-		log.error(traceback.format_exc())
+		log.error('An error occurred while authenticating:', traceback.format_exc())
 		log.info('Retrying')
 		return
 
@@ -42,7 +41,6 @@ def tumblr(cfg: AnimalConfig, img: SourceImage):
 		log.success(f'Posted image to Tumblr! Link: https://{blogname}.tumblr.com/post/{response["id"]}')
 		return True
 	except Exception:
-		log.error('An error occurred while posting the image:')
-		log.error(traceback.format_exc())
+		log.error('An error occurred while posting the image:', traceback.format_exc())
 		log.info('Retrying')
 		return

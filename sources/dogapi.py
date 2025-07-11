@@ -2,6 +2,7 @@ import requests
 
 from sources import ImageSource
 from utils.config import Config
+from utils.globals import BASE_HEADERS, REQUEST_TIMEOUT
 from utils.logger import Logger
 
 class DogAPI(ImageSource):
@@ -22,10 +23,9 @@ class DogAPI(ImageSource):
     self.logger.success(f'Fetched image! Got: {url}')
 
     # fetch image
-    res = requests.get(url)
+    res = requests.get(url, headers = BASE_HEADERS, timeout = REQUEST_TIMEOUT)
     if res.status_code != 200:
-      self.logger.error(f'Failed to fetch image from {self.url}: Status code {res.status_code}')
-      print(res.text)
+      self.logger.error(f'Failed to fetch image from {self.url}: Status code {res.status_code}\n{res.text}')
       return None
 
     return res.content
