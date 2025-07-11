@@ -1,7 +1,7 @@
 import asyncio
 import os
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, cast
 
 import filetype
 import requests
@@ -9,6 +9,7 @@ from PIL import Image
 
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
+from utils.image import SourceImage
 from utils.globals import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, cfg, log
 
 async def post():
@@ -30,13 +31,13 @@ async def post():
 		# fetch & validate img
 		img_fetch_retry = 0
 		while img_fetch_retry < MAX_IMG_FETCH_RETRY:
-			img = source.fetch_img()
-			if not img or len(img) == 0:
+			img_data = source.fetch_img()
+			if not img_data or len(img_data) == 0:
 				img_fetch_retry += 1
 				log.error(f'Failed to fetch image from "{source.name}". Retrying ({img_fetch_retry}/{MAX_IMG_FETCH_RETRY})')
 				continue
 
-			img_type = filetype.guess(img)
+			img_type = filetype.guess(img_data)
 			if img_type is None or img_type.extension not in IMG_EXTENSIONS:
 				img_fetch_retry += 1
 				log.error(f'Source "{source.name}" returned an invalid image. Retrying ({img_fetch_retry}/{MAX_IMG_FETCH_RETRY})')
@@ -46,57 +47,33 @@ async def post():
 			log.error(f'Failed to fetch image from "{source.name}". Reached retry limit ({MAX_IMG_FETCH_RETRY}).')
 			continue
 
-	try:
-		with open(IMG_PATH, 'wb') as f:
-			f.write(res.content)
+		# resize image to be below 1mb if applicable
+		img = SourceImage(cast(bytes, img_data))
+		if img.get_size_mb() > 1:
+			while img.get_size_mb() > 1:
+				dimensions = img.get_dimensions()
+				width = int(dimensions[0] * 0.9)
+				height = int(dimensions[1] * 0.9)
+				img.resize(width, height, 90)
 
-		log.info('Fetched image successfully. Compressing image to be under 1MB.')
+		# if everything is successful, post the image to all the platforms
+		if cfg.cfg[source.cfg_key]['twitter']['enabled']:
+			try:
+				twitter()
+			except Exception:
+				log.error('Failed to post to Twitter.')
 
-		# resave image as webp to compress it
-		img = Image.open(IMG_PATH)
-		img.save(IMG_PATH, 'webp', quality=100)
+		if cfg.cfg[source.cfg_key]['tumblr']['enabled']:
+			try:
+				tumblr()
+			except Exception:
+				log.error('Failed to post to Tumblr.')
 
-		while True:
-			with open(IMG_PATH, 'rb') as f:
-				img_bytes = f.read()
-
-			mib = len(img_bytes) / 1000 / 1000
-			if mib < 1:
-				break
-
-			img = Image.open(IMG_PATH)
-			width = int(img.width * 0.9)
-			height = int(img.height * 0.9)
-			img.resize((width, height), Image.Resampling.LANCZOS)
-			img.save(IMG_PATH, 'webp', quality=75)
-	except Exception:
-		log.error('Failed to write the fetched image.')
-		return
-
-	# check if the image is actually supported
-	img_type = filetype.guess(IMG_PATH)
-	if img_type is None or img_type.extension not in IMG_EXTENSIONS:
-		log.error('TheCatAPI returned an invalid image.')
-		return False
-
-	# if everything is successful, post the image to all the platforms
-	if cfg.cfg['cat']['twitter']['enabled']:
-		try:
-			twitter()
-		except Exception:
-			log.error('Failed to post to Twitter.')
-
-	if cfg.cfg['cat']['tumblr']['enabled']:
-		try:
-			tumblr()
-		except Exception:
-			log.error('Failed to post to Tumblr.')
-
-	if cfg.cfg['cat']['bluesky']['enabled']:
-		try:
-			bluesky()
-		except Exception:
-			log.error('Failed to post to Bluesky.')
+		if cfg.cfg[source.cfg_key]['bluesky']['enabled']:
+			try:
+				bluesky()
+			except Exception:
+				log.error('Failed to post to Bluesky.')
 
 	print()
 
