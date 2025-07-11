@@ -19,11 +19,12 @@ async def post():
 	]
 
 	for source in sources:
+		source_cfg = cfg.cfg[source.cfg_key]
 		# ensure at least one site is enabled otherwise we're wasting our time
 		if (
-			not cfg.cfg[source.cfg_key]['twitter']['enabled'] and
-			not cfg.cfg[source.cfg_key]['tumblr']['enabled'] and
-			not cfg.cfg[source.cfg_key]['bluesky']['enabled']
+			not source_cfg['twitter']['enabled'] and
+			not source_cfg['tumblr']['enabled'] and
+			not source_cfg['bluesky']['enabled']
 		):
 			log.error('No sites are enabled. Please enable at least one site in config.json.')
 			continue
@@ -57,23 +58,25 @@ async def post():
 				img.resize(width, height, 90)
 
 		# if everything is successful, post the image to all the platforms
-		if cfg.cfg[source.cfg_key]['twitter']['enabled']:
+		if source_cfg['twitter']['enabled']:
 			try:
-				twitter()
+				twitter(source_cfg, img)
 			except Exception:
 				log.error('Failed to post to Twitter.')
 
-		if cfg.cfg[source.cfg_key]['tumblr']['enabled']:
+		if source_cfg['tumblr']['enabled']:
 			try:
-				tumblr()
+				tumblr(source_cfg, img)
 			except Exception:
 				log.error('Failed to post to Tumblr.')
 
-		if cfg.cfg[source.cfg_key]['bluesky']['enabled']:
+		if source_cfg['bluesky']['enabled']:
 			try:
-				bluesky()
+				bluesky(source_cfg, img)
 			except Exception:
 				log.error('Failed to post to Bluesky.')
+
+		img.cleanup()
 
 	print()
 

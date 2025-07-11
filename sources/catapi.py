@@ -1,7 +1,7 @@
 import requests
 
 from sources import ImageSource
-from utils.globals import IMG_PATH, log
+from utils.globals import log
 from utils.config import Config
 
 class CatAPI(ImageSource):

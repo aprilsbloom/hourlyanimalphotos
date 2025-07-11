@@ -34,8 +34,8 @@ class SourceImage:
       f.write(self.data)
 
   def read(self) -> bytes:
-    with open(self.path, 'rb') as f:
-      return f.read()
+    self.re_read()
+    return self.data
 
   def re_read(self):
     with open(self.path, 'rb') as f:

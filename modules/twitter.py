@@ -4,16 +4,18 @@ import tweepy
 from tweepy import errors
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.globals import IMG_PATH, cfg, log
+from utils.config import AnimalConfig
+from utils.globals import log
+from utils.image import SourceImage
 
 
 @retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
-def twitter():
+def twitter(cfg: AnimalConfig, img: SourceImage):
 	try:
-		consumer_key = cfg.cfg['cat']['twitter']['consumer_key']
-		consumer_secret = cfg.cfg['cat']['twitter']['consumer_secret']
-		access_token = cfg.cfg['cat']['twitter']['access_token']
-		access_token_secret = cfg.cfg['cat']['twitter']['access_token_secret']
+		consumer_key = cfg['twitter']['consumer_key']
+		consumer_secret = cfg['twitter']['consumer_secret']
+		access_token = cfg['twitter']['access_token']
+		access_token_secret = cfg['twitter']['access_token_secret']
 
 		auth = tweepy.OAuth1UserHandler(
 			consumer_key = consumer_key,
@@ -37,7 +39,7 @@ def twitter():
 	log.info('Uploading image to Twitter')
 
 	try:
-		img = v1.chunked_upload(filename=IMG_PATH, media_category="tweet_image").media_id_string
+		img = v1.chunked_upload(filename=img.path, media_category="tweet_image").media_id_string
 	except Exception:
 		log.error(f'An error occured while uploading the image to Twitter: {traceback.format_exc()}')
 		log.info('Trying again...\n')
