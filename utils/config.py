@@ -11,6 +11,7 @@ class ConfigType(TypedDict):
 
 
 class AnimalConfig(TypedDict):
+  enabled: bool
   name: str
   api_key: str
   twitter: TwitterConfig
@@ -20,7 +21,6 @@ class AnimalConfig(TypedDict):
 
 class TwitterConfig(TypedDict):
   enabled: bool
-  username: str
   consumer_key: str
   consumer_secret: str
   access_token: str
@@ -50,16 +50,18 @@ class Config:
     self.path = path
     self.cfg = ConfigType(
       cat=AnimalConfig(
+        enabled=False,
         name="TheCatAPI",
         api_key="",
-        twitter=TwitterConfig(enabled=False, username="", consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
+        twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
         tumblr=TumblrConfig(enabled=False, blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
         bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
       ),
       dog=AnimalConfig(
+        enabled=False,
         name="TheDogAPI",
         api_key="",
-        twitter=TwitterConfig(enabled=False, username="", consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
+        twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
         tumblr=TumblrConfig(enabled=False, blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
         bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
       )
@@ -92,11 +94,11 @@ class Config:
     old_cfg = copy.deepcopy(self.cfg)
     self.cfg = ConfigType(
       cat=AnimalConfig(
+        enabled=cat_config.get("enabled", True),
         name=cat_config.get("name", "TheCatAPI"),
         api_key=cat_config.get("api_key", ""),
         twitter=TwitterConfig(
           enabled=cat_twitter.get("enabled", False),
-          username=cat_twitter.get("username", ""),
           consumer_key=cat_twitter.get("consumer_key", ""),
           consumer_secret=cat_twitter.get("consumer_secret", ""),
           access_token=cat_twitter.get("access_token", ""),
@@ -117,11 +119,11 @@ class Config:
         )
       ),
       dog=AnimalConfig(
+        enabled=dog_config.get("enabled", True),
         name=dog_config.get("name", "TheDogAPI"),
         api_key=dog_config.get("api_key", ""),
         twitter=TwitterConfig(
           enabled=dog_twitter.get("enabled", False),
-          username=dog_twitter.get("username", ""),
           consumer_key=dog_twitter.get("consumer_key", ""),
           consumer_secret=dog_twitter.get("consumer_secret", ""),
           access_token=dog_twitter.get("access_token", ""),

@@ -15,5 +15,4 @@ BASE_HEADERS: Final = {
 
 MAX_IMG_FETCH_RETRY = 3
 
-log = Logger()
 cfg = Config("config.json")

@@ -3,13 +3,18 @@ import traceback
 import pytumblr
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.globals import CAT_TAGS, log
 from utils.config import AnimalConfig
+from utils.globals import CAT_TAGS
 from utils.image import SourceImage
+from utils.logger import Logger
+
+log = Logger("Tumblr")
 
 
 @retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
 def tumblr(cfg: AnimalConfig, img: SourceImage):
+	log.info('Posting to Tumblr')
+
 	try:
 		blogname = cfg['tumblr']['blogname']
 		tumblr = pytumblr.TumblrRestClient(
@@ -19,11 +24,12 @@ def tumblr(cfg: AnimalConfig, img: SourceImage):
 			oauth_secret = cfg['tumblr']['oauth_token_secret']
 		)
 	except Exception:
-		log.error(f'An error occurred while authenticating to Tumblr: {traceback.format_exc()}')
-		log.info('Trying again...\n')
+		log.error('An error occurred while authenticating:')
+		log.error(traceback.format_exc())
+		log.info('Retrying')
 		return
 
-	log.info('Posting image to Tumblr')
+	log.info('Posting image')
 
 	try:
 		response = tumblr.create_photo(
@@ -36,6 +42,7 @@ def tumblr(cfg: AnimalConfig, img: SourceImage):
 		log.success(f'Posted image to Tumblr! Link: https://{blogname}.tumblr.com/post/{response["id"]}')
 		return True
 	except Exception:
-		log.error(f'An error while posting the image on Tumblr: {traceback.format_exc()}')
-		log.info('Trying again...\n')
+		log.error('An error occurred while posting the image:')
+		log.error(traceback.format_exc())
+		log.info('Retrying')
 		return
