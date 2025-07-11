@@ -11,7 +11,20 @@ class DogAPI(ImageSource):
     self.name = 'TheDogAPI'
     self.url = 'https://api.thedogapi.com/v1/images/search?mime_types=jpg,png'
 
-  def fetch_img(self) -> bytes:
+  def fetch_img(self) -> bytes | None:
+    # get url
+    url = self.fetch_img_url()
+    if not url:
+      return None
+
+    # fetch image
+    res = requests.get(url)
+    if res.status_code != 200:
+      return None
+
+    return res.content
+
+  def fetch_img_url(self) -> str:
     cfg = self.cfg.cfg[self.cfg_key]
     api_key = cfg['api_key']
 
@@ -20,4 +33,10 @@ class DogAPI(ImageSource):
       headers = { 'x-api-key': api_key }
     )
 
-    return bytes()
+    # dogapi returns a list of images
+    data = res.json()
+    if isinstance(data, list):
+      data = data[0]
+
+    url = data.get('url', '')
+    return url

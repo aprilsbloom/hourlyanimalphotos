@@ -9,9 +9,8 @@ from PIL import Image
 
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
-from utils.globals import IMG_EXTENSIONS, IMG_PATH, cfg, log
+from utils.globals import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, cfg, log
 
-retry_count = 0
 async def post():
 	sources: List[ImageSource] = [
 		CatAPI(cfg),
@@ -19,65 +18,33 @@ async def post():
 	]
 
 	for source in sources:
-		img = source.fetch_img()
-		if not img:
-			log.error(f'Failed to fetch image from {source.cfg_key}.')
+		# ensure at least one site is enabled otherwise we're wasting our time
+		if (
+			not cfg.cfg[source.cfg_key]['twitter']['enabled'] and
+			not cfg.cfg[source.cfg_key]['tumblr']['enabled'] and
+			not cfg.cfg[source.cfg_key]['bluesky']['enabled']
+		):
+			log.error('No sites are enabled. Please enable at least one site in config.json.')
 			continue
 
-		img_type = filetype.guess(img)
-		if img_type is None or img_type.extension not in IMG_EXTENSIONS:
-			log.error(f'The {source.name} returned an invalid image.')
+		# fetch & validate img
+		img_fetch_retry = 0
+		while img_fetch_retry < MAX_IMG_FETCH_RETRY:
+			img = source.fetch_img()
+			if not img or len(img) == 0:
+				img_fetch_retry += 1
+				log.error(f'Failed to fetch image from "{source.name}". Retrying ({img_fetch_retry}/{MAX_IMG_FETCH_RETRY})')
+				continue
+
+			img_type = filetype.guess(img)
+			if img_type is None or img_type.extension not in IMG_EXTENSIONS:
+				img_fetch_retry += 1
+				log.error(f'Source "{source.name}" returned an invalid image. Retrying ({img_fetch_retry}/{MAX_IMG_FETCH_RETRY})')
+				continue
+
+		if img_fetch_retry == MAX_IMG_FETCH_RETRY:
+			log.error(f'Failed to fetch image from "{source.name}". Reached retry limit ({MAX_IMG_FETCH_RETRY}).')
 			continue
-
-	global retry_count
-	retry_count = 0
-
-	# ensure at least one site is enabled otherwise we're wasting our time
-	if (
-		not cfg.cfg['cat']['twitter']['enabled'] and
-		not cfg.cfg['cat']['tumblr']['enabled'] and
-		not cfg.cfg['cat']['bluesky']['enabled']
-	):
-		log.error('No sites are enabled. Please enable at least one site in config.json.')
-		return
-
-	log.info('Fetching image from https://thecatapi.com')
-	res = requests.get(
-		url = 'https://api.thecatapi.com/v1/images/search?mime_types=jpg,png',
-		headers = { 'x-api-key': cfg.cfg['cat']['api_key'] }
-	)
-
-	try:
-		data = res.json()
-	except requests.exceptions.JSONDecodeError:
-		log.error('Failed to fetch image.')
-		if retry_count == 3:
-			log.info('Retrying...')
-			retry_count += 1
-
-			await post()
-		else:
-			log.error('Reached retry limit, giving up.')
-
-		return
-
-	# catapi sometimes returns things in a list for some reason
-	if isinstance(data, list):
-		data = data[0]
-
-	# check if the request was successful by checking for the 'url' key
-	url = data.get('url')
-	if not url:
-		log.error('Failed to fetch image.')
-		return False
-
-	# if everything is successful, fetch the image and write it to a file
-	res = requests.get(url)
-	if os.path.exists(IMG_PATH):
-		try:
-			os.remove(IMG_PATH)
-		except Exception:
-			log.error(f'Failed to remove {IMG_PATH}.')
 
 	try:
 		with open(IMG_PATH, 'wb') as f:
