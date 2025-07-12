@@ -1,8 +1,10 @@
 from __future__ import annotations
 import os
 import copy
-from typing import Dict, Any, TypedDict, Optional
+from typing import Dict, Any, TypedDict, Optional, List
 import json
+
+from utils.globals import CAT_TAGS, DOG_TAGS
 
 
 class ConfigType(TypedDict):
@@ -29,6 +31,7 @@ class TwitterConfig(TypedDict):
 
 class TumblrConfig(TypedDict):
   enabled: bool
+  tags: List[str]
   blogname: str
   consumer_key: str
   consumer_secret: str
@@ -54,7 +57,15 @@ class Config:
         name="TheCatAPI",
         api_key="",
         twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
-        tumblr=TumblrConfig(enabled=False, blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
+        tumblr=TumblrConfig(
+          enabled=False,
+          tags=CAT_TAGS,
+          blogname="",
+          consumer_key="",
+          consumer_secret="",
+          oauth_token="",
+          oauth_token_secret=""
+        ),
         bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
       ),
       dog=AnimalConfig(
@@ -62,7 +73,7 @@ class Config:
         name="TheDogAPI",
         api_key="",
         twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
-        tumblr=TumblrConfig(enabled=False, blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
+        tumblr=TumblrConfig(enabled=False, tags=[], blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
         bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
       )
     )
@@ -106,6 +117,7 @@ class Config:
         ),
         tumblr=TumblrConfig(
           enabled=cat_tumblr.get("enabled", False),
+          tags=cat_tumblr.get("tags", CAT_TAGS),
           blogname=cat_tumblr.get("blogname", ""),
           consumer_key=cat_tumblr.get("consumer_key", ""),
           consumer_secret=cat_tumblr.get("consumer_secret", ""),
@@ -131,6 +143,7 @@ class Config:
         ),
         tumblr=TumblrConfig(
           enabled=dog_tumblr.get("enabled", False),
+          tags=dog_tumblr.get("tags", DOG_TAGS),
           blogname=dog_tumblr.get("blogname", ""),
           consumer_key=dog_tumblr.get("consumer_key", ""),
           consumer_secret=dog_tumblr.get("consumer_secret", ""),

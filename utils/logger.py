@@ -30,3 +30,6 @@ class Logger:
 
   def success(self, *args, **kwargs):
     print(f"{self.fetch_time()} [{self.name}] {colors['green']}[+]{colors['reset']}", *args, **kwargs)
+
+  def input(self, prompt: str) -> str:
+    return input(f"{self.fetch_time()} [{self.name}] {colors['grey']}[?]{colors['reset']} {prompt}")

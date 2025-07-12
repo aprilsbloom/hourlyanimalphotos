@@ -1,4 +1,5 @@
 import traceback
+import time
 
 from atproto import Client
 from tenacity import retry, retry_if_result, stop_after_attempt
@@ -9,7 +10,7 @@ from utils.logger import Logger
 
 log = Logger("Bluesky")
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
+@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(5))
 def bluesky(cfg: AnimalConfig, img: SourceImage):
 	log.info('Posting to Bluesky')
 

@@ -31,6 +31,22 @@ CAT_TAGS = {
   "kitty cat photos",
 }
 
+DOG_TAGS = {
+  "dog",
+  "dogs",
+  "dog photo",
+  "dog photos",
+
+  "puppy",
+  "puppies",
+  "puppy photo",
+  "puppy photos",
+
+  "hourly dog",
+  "hourly dogs",
+  "hourly dog photo",
+  "hourly dog photos",
+}
 
 REQUEST_TIMEOUT: Final[int] = 30
 BASE_HEADERS: Final[Dict[str, str]] = {

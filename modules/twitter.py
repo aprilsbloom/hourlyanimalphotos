@@ -12,7 +12,7 @@ from utils.logger import Logger
 log = Logger("Twitter")
 
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(1))
+@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(5))
 def twitter(cfg: AnimalConfig, img: SourceImage):
 	log.info('Posting to Twitter')
 
