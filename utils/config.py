@@ -84,12 +84,11 @@ class Config:
     return self._saving
 
   def load(self):
-    if not os.path.exists(self.path):
-      self.save()
-      return
-
-    with open(self.path, "r", encoding="utf-8") as f:
-      loaded_cfg = json.load(f)
+    if os.path.exists(self.path):
+      with open(self.path, "r", encoding="utf-8") as f:
+        loaded_cfg = json.load(f)
+    else:
+      loaded_cfg = {}
 
     cat_config = loaded_cfg.get("cat", {})
     cat_twitter = cat_config.get("twitter", {})
@@ -102,6 +101,7 @@ class Config:
     dog_bluesky = dog_config.get("bluesky", {})
 
     old_cfg = copy.deepcopy(self.cfg) if hasattr(self, 'cfg') else None
+
     self.cfg = ConfigType(
       cat=AnimalConfig(
         enabled=cat_config.get("enabled", True),
@@ -159,14 +159,10 @@ class Config:
       )
     )
 
-    self.validate()
-
     if old_cfg != self.cfg:
       self.save()
 
   def watch(self):
-    self.log.info("Watching config file for changes")
-
     class ConfigFileHandler(FileSystemEventHandler):
       config: Config
       last_modified: float
@@ -194,6 +190,7 @@ class Config:
         if event.src_path == os.path.abspath(self.config.path):
           self.config.log.info("Config file modified, reloading...")
           self.config.load()
+          self.config.validate()
 
     observer = Observer()
     handler = ConfigFileHandler(self)
@@ -203,7 +200,7 @@ class Config:
     self._observer = observer
 
   def validate(self, should_exit: bool = False) -> None:
-    exit = lambda: os._exit(1) if should_exit else None
+    exit_needed = False
 
     # validate cfg entries
     # if a social media platform is enabled, ensure all keys are set
@@ -219,13 +216,8 @@ class Config:
 
       # needs an api key to function lol
       if not source_cfg['api_key']:
-        self.log.error(f'API key is not set for source "{source}" ("{source_cfg["name"]}"). Please set it in config.json.')
-        if source_cfg['enabled']:
-          self.log.error(f'The source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
-          source_cfg['enabled'] = False
-          self.save()
-
-        return exit()
+        self.log.error(f'API key is not set for source "{source}" ("{source_cfg["name"]}").')
+        exit_needed = True
 
       # twitter
       if source_cfg['twitter']['enabled']:
@@ -236,13 +228,14 @@ class Config:
             missing_keys.append(key)
 
         if len(missing_keys) > 0:
-          self.log.error(f'The following keys for Twitter in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          self.log.error(f'The following keys for Twitter in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}.')
+
           if source_cfg['twitter']['enabled']:
-            self.log.error(f'Twitter in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+            self.log.info(f'Twitter in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
             source_cfg['twitter']['enabled'] = False
             self.save()
 
-          return exit()
+          exit_needed = True
 
       # tumblr
       if source_cfg['tumblr']['enabled']:
@@ -253,15 +246,16 @@ class Config:
             missing_keys.append(key)
 
         if len(missing_keys) > 0:
-          self.log.error(f'The following keys for Tumblr in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          self.log.error(f'The following keys for Tumblr in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}.')
+
           if source_cfg['tumblr']['enabled']:
-            self.log.error(f'Tumblr in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+            self.log.info(f'Tumblr in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
             source_cfg['tumblr']['enabled'] = False
             self.save()
 
-          return exit()
+          exit_needed = True
 
-        if not source_cfg['tumblr']['oauth_token'] or not source_cfg['tumblr']['oauth_token_secret']:
+        if not exit_needed and (not source_cfg['tumblr']['oauth_token'] or not source_cfg['tumblr']['oauth_token_secret']):
           self.init_tumblr_oauth(source_cfg)
 
       # bluesky
@@ -273,17 +267,21 @@ class Config:
             missing_keys.append(key)
 
         if len(missing_keys) > 0:
-          self.log.error(f'The following keys for Bluesky in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          self.log.error(f'The following keys for Bluesky in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}.')
+
           if source_cfg['bluesky']['enabled']:
-            self.log.error(f'Bluesky in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+            self.log.info(f'Bluesky in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
             source_cfg['bluesky']['enabled'] = False
             self.save()
 
-          return exit()
+          exit_needed = True
 
     if not has_found_enabled_source:
-      self.log.error('No enabled sources found. Please enable at least one source in config.json.')
-      return exit()
+      self.log.error('No enabled sources found. Please enable at least one source.')
+      exit_needed = True
+
+    if exit_needed and should_exit:
+      os._exit(1)
 
   def init_tumblr_oauth(self, source_cfg: AnimalConfig) -> None:
     tumblr_log = Logger("Tumblr")
