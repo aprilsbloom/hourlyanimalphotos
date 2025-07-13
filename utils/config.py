@@ -1,10 +1,10 @@
 from __future__ import annotations
 import os
 import copy
-from typing import TypedDict, List, Literal
 import json
 import time
 import threading
+from typing import TypedDict, List, Literal
 
 from requests_oauthlib import OAuth1Session
 from watchdog.observers import Observer
