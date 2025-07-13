@@ -1,4 +1,5 @@
 import requests
+from copy import deepcopy
 
 from sources import ImageSource
 from utils.config import Config
@@ -32,12 +33,13 @@ class DogAPI(ImageSource):
 
   def fetch_img_url(self) -> str:
     cfg = self.cfg.cfg[self.cfg_key]
-    api_key = cfg['api_key']
+    headers = deepcopy(BASE_HEADERS)
+    headers['x-api-key'] = cfg['api_key']
 
     self.logger.info(f'Fetching image from {self.url}')
     res = requests.get(
       url = self.url,
-      headers = { 'x-api-key': api_key }
+      headers = headers
     )
 
     # dogapi returns a list of images

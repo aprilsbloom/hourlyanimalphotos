@@ -68,7 +68,7 @@ def twitter(cfg: TwitterConfig, img: SourceImage):
 
 	# check response
 	if response.data and response.errors == []: # type: ignore
-		log.success(f'Posted image! Link: https://x.com/i/status/{response.data["id"]}') # type: ignore
+		log.success(f'Posted image to Twitter! Link: https://x.com/i/status/{response.data["id"]}') # type: ignore
 		return True
 	else:
 		log.error('An error occurred while posting the image (response):', response.errors) # type: ignore

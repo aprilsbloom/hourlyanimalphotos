@@ -5,12 +5,10 @@ from typing import List, cast
 
 import filetype
 import shutil
-from PIL import Image
-from requests_oauthlib import OAuth1Session
 
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
-from utils.config import cfg, Config, TumblrConfig
+from utils.config import cfg
 from utils.image import SourceImage
 from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY
 from utils.logger import Logger

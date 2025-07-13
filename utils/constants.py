@@ -51,8 +51,7 @@ DOG_TAGS = {
 
 REQUEST_TIMEOUT: Final[int] = 30
 BASE_HEADERS: Final[Dict[str, str]] = {
-	"User-Agent": "HourlyAnimalPhotos (https://github.com/aprilsbloom/hourly-animal-photos)",
+	"User-Agent": "HourlyAnimalPhotos (https://github.com/aprilsbloom/hourlyanimalphotos)",
 	"Accept": "*/*",
-	"Accept-Encoding": "gzip, deflate, br",
 	"Connection": "keep-alive",
 }

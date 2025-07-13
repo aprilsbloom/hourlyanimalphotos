@@ -51,7 +51,6 @@ def tumblr(tumblr_cfg: TumblrConfig, img: SourceImage):
 			log.error(f'An error occurred while posting the image (status: {status}, {status_msg}): {error}')
 			return
 
-		print(response)
 		log.success(f'Posted image to Tumblr! Link: https://{blogname}.tumblr.com/post/{response["id"]}')
 		return True
 	except Exception:
