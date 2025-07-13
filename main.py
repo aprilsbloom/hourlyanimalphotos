@@ -10,7 +10,7 @@ from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
 from utils.config import cfg
 from utils.image import SourceImage
-from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY
+from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, MAX_IMG_SIZE_MB
 from utils.logger import Logger
 
 log = Logger("Main")
@@ -64,8 +64,8 @@ async def post():
 
 		# resize image to be below 1mb if applicable
 		img = SourceImage(cast(bytes, img_data))
-		if img.get_size_mb() > 1:
-			while img.get_size_mb() > 1:
+		if img.get_size_mb() > MAX_IMG_SIZE_MB:
+			while img.get_size_mb() > MAX_IMG_SIZE_MB:
 				dimensions = img.get_dimensions()
 				width = int(dimensions[0] * 0.9)
 				height = int(dimensions[1] * 0.9)
@@ -99,14 +99,15 @@ async def main():
 	shutil.rmtree('jobs', ignore_errors=True)
 	cfg.validate()
 
-	await post()
+	while True:
+    # run loop 15s early to account for img fetching
+		current_time = datetime.now()
+		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second - 15, microseconds=-current_time.microsecond)
 
-	# while True:
-	# 	current_time = datetime.now()
-	# 	goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second, microseconds=-current_time.microsecond)
-	# 	log.info(f'Posting at: {goal_timestamp.strftime("%H:%M:%S")}')
-	# 	await asyncio.sleep((goal_timestamp - current_time).total_seconds())
-	# 	await post()
+		log.info(f'Posting at: {goal_timestamp.strftime("%H:%M:%S")}')
+		await asyncio.sleep((goal_timestamp - current_time).total_seconds())
+
+		await post()
 
 if __name__ == '__main__':
 	asyncio.run(main())

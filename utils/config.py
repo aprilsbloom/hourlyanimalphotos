@@ -57,36 +57,8 @@ class Config:
 
   def __init__(self, path: str):
     self.path = path
-    self.cfg = ConfigType(
-      cat=AnimalConfig(
-        enabled=False,
-        key="cat",
-        name="TheCatAPI",
-        api_key="",
-        twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
-        tumblr=TumblrConfig(
-          enabled=False,
-          tags=list(CAT_TAGS),
-          blogname="",
-          consumer_key="",
-          consumer_secret="",
-          oauth_token="",
-          oauth_token_secret=""
-        ),
-        bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
-      ),
-      dog=AnimalConfig(
-        enabled=False,
-        key="dog",
-        name="TheDogAPI",
-        api_key="",
-        twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
-        tumblr=TumblrConfig(enabled=False, tags=list(DOG_TAGS), blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
-        bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
-      )
-    )
     self.log = Logger("Config")
-
+    self.watch()
     self.load()
 
   def save(self):
@@ -111,7 +83,8 @@ class Config:
     dog_tumblr = dog_config.get("tumblr", {})
     dog_bluesky = dog_config.get("bluesky", {})
 
-    old_cfg = copy.deepcopy(self.cfg)
+    old_cfg = copy.deepcopy(self.cfg) if hasattr(self, 'cfg') else None
+
     self.cfg = ConfigType(
       cat=AnimalConfig(
         enabled=cat_config.get("enabled", True),
@@ -172,6 +145,10 @@ class Config:
     if old_cfg != self.cfg:
       self.save()
 
+  def watch(self):
+    self.log.info("Watching config file for changes")
+    pass
+
   def validate(self, should_exit: bool = True) -> None:
     exit = lambda: os._exit(1) if should_exit else None
 
@@ -190,6 +167,11 @@ class Config:
       # needs an api key to function lol
       if not source_cfg['api_key']:
         self.log.error(f'API key is not set for source "{source}" ("{source_cfg["name"]}"). Please set it in config.json.')
+        if source_cfg['enabled']:
+          self.log.error(f'The source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+          source_cfg['enabled'] = False
+          self.save()
+
         return exit()
 
       # twitter
@@ -202,6 +184,11 @@ class Config:
 
         if len(missing_keys) > 0:
           self.log.error(f'The following keys for Twitter in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          if source_cfg['twitter']['enabled']:
+            self.log.error(f'Twitter in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+            source_cfg['twitter']['enabled'] = False
+            self.save()
+
           return exit()
 
       # tumblr
@@ -214,6 +201,11 @@ class Config:
 
         if len(missing_keys) > 0:
           self.log.error(f'The following keys for Tumblr in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          if source_cfg['tumblr']['enabled']:
+            self.log.error(f'Tumblr in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+            source_cfg['tumblr']['enabled'] = False
+            self.save()
+
           return exit()
 
         if not source_cfg['tumblr']['oauth_token'] or not source_cfg['tumblr']['oauth_token_secret']:
@@ -229,6 +221,11 @@ class Config:
 
         if len(missing_keys) > 0:
           self.log.error(f'The following keys for Bluesky in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          if source_cfg['bluesky']['enabled']:
+            self.log.error(f'Bluesky in source "{source}" ("{source_cfg["name"]}") has now been disabled for you.')
+            source_cfg['bluesky']['enabled'] = False
+            self.save()
+
           return exit()
 
     if not has_found_enabled_source:

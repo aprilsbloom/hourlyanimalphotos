@@ -2,12 +2,14 @@ from typing import Dict, Final
 
 # ---- Misc ---- #
 IMG_EXTENSIONS = ["jpg", "png", "jpeg", "webp"]
-MAX_IMG_FETCH_RETRY = 3
 
-MAX_POST_RETRY = 3
-POST_RETRY_SLEEP = 5
+MAX_IMG_SIZE_MB: Final[int] = 1
+MAX_IMG_FETCH_RETRY: Final[int] = 3
 
-CAT_TAGS = {
+MAX_POST_RETRY: Final[int] = 3
+POST_RETRY_SLEEP: Final[int] = 5
+
+CAT_TAGS = [
   "cat",
   "cats",
 
@@ -30,9 +32,9 @@ CAT_TAGS = {
   "kitty cats",
   "kitty cat photo",
   "kitty cat photos",
-}
+]
 
-DOG_TAGS = {
+DOG_TAGS = [
   "dog",
   "dogs",
   "dog photo",
@@ -47,7 +49,7 @@ DOG_TAGS = {
   "hourly dogs",
   "hourly dog photo",
   "hourly dog photos",
-}
+]
 
 REQUEST_TIMEOUT: Final[int] = 30
 BASE_HEADERS: Final[Dict[str, str]] = {
