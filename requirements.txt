@@ -38,5 +38,6 @@ tweepy==4.16.0
 typing-extensions==4.14.1
 typing-inspection==0.4.1
 urllib3==2.5.0
+watchdog==6.0.0
 websockets==13.1
 zope-interface==7.2

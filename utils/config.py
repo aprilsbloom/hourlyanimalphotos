@@ -3,8 +3,13 @@ import os
 import copy
 from typing import TypedDict, List, Literal
 import json
+import time
+import threading
 
 from requests_oauthlib import OAuth1Session
+from watchdog.observers import Observer
+from watchdog.observers.api import BaseObserver
+from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 
 from utils.logger import Logger
 from utils.constants import CAT_TAGS, DOG_TAGS
@@ -54,16 +59,29 @@ class Config:
   path: str
   cfg: ConfigType
   log: Logger
+  _observer: BaseObserver
+  _saving: bool = False
 
   def __init__(self, path: str):
     self.path = path
     self.log = Logger("Config")
-    self.watch()
+
     self.load()
+    self.watch()
 
   def save(self):
+    self._saving = True
     with open(self.path, "w", encoding="utf-8") as f:
       json.dump(self.cfg, f, indent=2, ensure_ascii=False)
+
+    def reset_is_saving():
+      time.sleep(1)
+      self._saving = False
+
+    threading.Thread(target=reset_is_saving, daemon=True).start()
+
+  def is_saving(self):
+    return self._saving
 
   def load(self):
     if not os.path.exists(self.path):
@@ -84,7 +102,6 @@ class Config:
     dog_bluesky = dog_config.get("bluesky", {})
 
     old_cfg = copy.deepcopy(self.cfg) if hasattr(self, 'cfg') else None
-
     self.cfg = ConfigType(
       cat=AnimalConfig(
         enabled=cat_config.get("enabled", True),
@@ -142,14 +159,50 @@ class Config:
       )
     )
 
+    self.validate()
+
     if old_cfg != self.cfg:
       self.save()
 
   def watch(self):
     self.log.info("Watching config file for changes")
-    pass
 
-  def validate(self, should_exit: bool = True) -> None:
+    class ConfigFileHandler(FileSystemEventHandler):
+      config: Config
+      last_modified: float
+
+      def __init__(self, config_instance):
+        self.config = config_instance
+        self.last_modified = os.path.getmtime(self.config.path)
+
+      def on_modified(self, event):
+        # skip if not modified event
+        if not isinstance(event, FileModifiedEvent):
+          return
+
+        # skip if modification from saving
+        if self.config.is_saving():
+          return
+
+        # skip if fired in short period
+        if time.time() - self.last_modified < 1:
+          return
+
+        self.last_modified = time.time()
+
+        # reload cfg if modified
+        if event.src_path == os.path.abspath(self.config.path):
+          self.config.log.info("Config file modified, reloading...")
+          self.config.load()
+
+    observer = Observer()
+    handler = ConfigFileHandler(self)
+    observer.schedule(handler, os.path.dirname(os.path.abspath(self.path)), recursive=False)
+    observer.start()
+
+    self._observer = observer
+
+  def validate(self, should_exit: bool = False) -> None:
     exit = lambda: os._exit(1) if should_exit else None
 
     # validate cfg entries

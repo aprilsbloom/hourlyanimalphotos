@@ -97,7 +97,7 @@ async def post():
 
 async def main():
 	shutil.rmtree('jobs', ignore_errors=True)
-	cfg.validate()
+	cfg.validate(should_exit=True)
 
 	while True:
     # run loop 15s early to account for img fetching
