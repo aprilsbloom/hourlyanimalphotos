@@ -29,6 +29,7 @@ class AnimalConfig(TypedDict):
   twitter: TwitterConfig
   tumblr: TumblrConfig
   bluesky: BlueskyConfig
+  webhooks: DiscordWebhooks
 
 
 class TwitterConfig(TypedDict):
@@ -53,6 +54,12 @@ class BlueskyConfig(TypedDict):
   enabled: bool
   username: str
   app_password: str
+
+
+class DiscordWebhooks(TypedDict):
+  twitter: str
+  tumblr: str
+  bluesky: str
 
 
 class Config:
@@ -94,11 +101,13 @@ class Config:
     cat_twitter = cat_config.get("twitter", {})
     cat_tumblr = cat_config.get("tumblr", {})
     cat_bluesky = cat_config.get("bluesky", {})
+    cat_discord_webhooks = cat_config.get("discord_webhooks", {})
 
     dog_config = loaded_cfg.get("dog", {})
     dog_twitter = dog_config.get("twitter", {})
     dog_tumblr = dog_config.get("tumblr", {})
     dog_bluesky = dog_config.get("bluesky", {})
+    dog_discord_webhooks = dog_config.get("discord_webhooks", {})
 
     old_cfg = copy.deepcopy(self.cfg) if hasattr(self, 'cfg') else None
 
@@ -128,6 +137,11 @@ class Config:
           enabled=cat_bluesky.get("enabled", False),
           username=cat_bluesky.get("username", ""),
           app_password=cat_bluesky.get("app_password", "")
+        ),
+        webhooks=DiscordWebhooks(
+          twitter=cat_discord_webhooks.get("twitter", ""),
+          tumblr=cat_discord_webhooks.get("tumblr", ""),
+          bluesky=cat_discord_webhooks.get("bluesky", "")
         )
       ),
       dog=AnimalConfig(
@@ -155,6 +169,11 @@ class Config:
           enabled=dog_bluesky.get("enabled", False),
           username=dog_bluesky.get("username", ""),
           app_password=dog_bluesky.get("app_password", "")
+        ),
+        webhooks=DiscordWebhooks(
+          twitter=dog_discord_webhooks.get("twitter", ""),
+          tumblr=dog_discord_webhooks.get("tumblr", ""),
+          bluesky=dog_discord_webhooks.get("bluesky", "")
         )
       )
     )
@@ -275,6 +294,11 @@ class Config:
             self.save()
 
           exit_needed = True
+
+      # discord webhook
+      for platform, webhook_url in source_cfg['discord_webhooks'].items():
+        if webhook_url and not webhook_url.startswith("https://discord.com/api/webhooks/"):
+          self.log.error(f'Discord webhook URL for {platform} in source "{source}" ("{source_cfg["name"]}") doesn\'t appear to be valid.')
 
     if not has_found_enabled_source:
       self.log.error('No enabled sources found. Please enable at least one source.')
