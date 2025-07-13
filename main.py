@@ -1,18 +1,15 @@
 import asyncio
-import io
-import os
-from datetime import datetime, timedelta
 import traceback
+from datetime import datetime, timedelta
 from typing import List, cast
 
-from discord_webhook import DiscordEmbed
 import filetype
 import shutil
 
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
 from utils.config import cfg
-from utils.discord import DiscordFile, send_message
+from utils.discord import DiscordEmbed, DiscordFile, send_message
 from utils.image import SourceImage
 from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, MAX_IMG_SIZE_MB
 from utils.logger import Logger

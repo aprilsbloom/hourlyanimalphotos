@@ -2,11 +2,10 @@ import traceback
 import time
 
 from atproto import Client
-from discord_webhook import DiscordEmbed
 from tenacity import retry, retry_if_result, stop_after_attempt
 
 from utils.config import AnimalConfig
-from utils.discord import DiscordFile, send_message
+from utils.discord import DiscordEmbed, DiscordFile, send_message
 from utils.image import SourceImage
 from utils.logger import Logger
 from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
