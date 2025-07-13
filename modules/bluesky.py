@@ -1,37 +1,64 @@
 import traceback
+import time
 
 from atproto import Client
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.globals import IMG_PATH, cfg, log
+from utils.config import AnimalConfig
+from utils.discord import DiscordEmbed, DiscordFile, send_message
+from utils.image import SourceImage
+from utils.logger import Logger
+from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 
+log = Logger("Bluesky")
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result))
-def bluesky():
+@retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
+def bluesky(source_cfg: AnimalConfig, img: SourceImage):
+	log.info('Posting to Bluesky')
+
 	try:
 		bs = Client()
 		bs.login(
-			login = cfg.get('bluesky.username'),
-			password = cfg.get('bluesky.app_password')
+			login = source_cfg['bluesky']['username'],
+			password = source_cfg['bluesky']['app_password']
 		)
 	except Exception:
-		log.error('Failed to create Bluesky client.')
+		log.error('An error occurred while authenticating:', traceback.format_exc())
+		send_message(
+			url=source_cfg['webhooks']['bluesky'],
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Failed to authenticate to Bluesky.',
+				color=0xFF0000
+			)
+		)
+
+		log.info('Retrying')
 		return False
 
-	with open(IMG_PATH, 'rb') as f:
-		image = f.read()
-
-	log.info('Sending image to Bluesky')
+	log.info('Posting image')
 	try:
 		res = bs.send_image(
 			text = "",
-			image = image,
+			image = img.read(),
 			image_alt = ""
 		)
 
 		url = res.uri.split('app.bsky.feed.')[1]
-		log.success(f'Posted image to Bluesky! Link: https://bsky.app/profile/{cfg.get("bluesky.username")}/{url}')
+		log.success(f'Posted image to Bluesky! Link: https://bsky.app/profile/{source_cfg["bluesky"]["username"]}/{url}')
 		return True
 	except Exception:
-		log.error(f'Failed to send image to Bluesky: {traceback.format_exc()}')
+		log.error('An error occurred while posting the image:', traceback.format_exc())
+		send_message(
+			url=source_cfg['webhooks']['bluesky'],
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Failed to post to Bluesky.',
+				color=0xFF0000
+			)
+		)
+
+		log.info('Retrying')
 		return False

@@ -1,29 +1,35 @@
 from datetime import datetime
 
+colors = {
+  "red": "\033[91m",
+  "yellow": "\033[93m",
+  "green": "\033[92m",
+  "grey": "\033[90m",
+  "reset": "\033[37m"
+}
 
 class Logger:
-  def __init__(self):
-    self.red = "\033[91m"
-    self.yellow = "\033[93m"
-    self.green = "\033[92m"
-    self.grey = "\033[90m"
-    self.reset = "\033[37m"
+  name: str
+
+  def __init__(self, name: str):
+    self.name = name
 
   @staticmethod
   def fetch_time():
     time = datetime.now().strftime("%H:%M:%S")
     return f"[{time}]"
 
-  def info(self, text):
-    print(f"{self.fetch_time()} {self.grey}[~]{self.reset} {text}")
+  def info(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['grey']}[~]{colors['reset']}", *args, **kwargs)
 
-  def error(self, text):
-    print(f"{self.fetch_time()} {self.red}[-]{self.reset} {text}")
+  def error(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['red']}[-]{colors['reset']}", *args, **kwargs)
 
-  def warning(self, text):
-    print(f"{self.fetch_time()} {self.yellow}[!]{self.reset} {text}")
+  def warning(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['yellow']}[!]{colors['reset']}", *args, **kwargs)
 
-  def success(self, text):
-    print(f"{self.fetch_time()} {self.green}[+]{self.reset} {text}")
+  def success(self, *args, **kwargs):
+    print(f"{self.fetch_time()} [{self.name}] {colors['green']}[+]{colors['reset']}", *args, **kwargs)
 
-log = Logger()
+  def input(self, prompt: str) -> str:
+    return input(f"{self.fetch_time()} [{self.name}] {colors['grey']}[?]{colors['reset']} {prompt}")
