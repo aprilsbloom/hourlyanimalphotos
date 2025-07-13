@@ -1,14 +1,18 @@
 import asyncio
+import io
 import os
 from datetime import datetime, timedelta
+import traceback
 from typing import List, cast
 
+from discord_webhook import DiscordEmbed
 import filetype
 import shutil
 
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
 from utils.config import cfg
+from utils.discord import DiscordFile, send_message
 from utils.image import SourceImage
 from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, MAX_IMG_SIZE_MB
 from utils.logger import Logger
@@ -77,18 +81,45 @@ async def post():
 				twitter(source_cfg['twitter'], img)
 			except Exception:
 				log.error('Failed to post to Twitter.')
+				send_message(
+					url=source_cfg['webhooks']['twitter'],
+					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+					embed=DiscordEmbed(
+						title='Error',
+						description='Failed to post to Twitter.',
+						color=0xFF0000
+					)
+				)
 
 		if source_cfg['tumblr']['enabled']:
 			try:
 				tumblr(source_cfg['tumblr'], img)
 			except Exception:
 				log.error('Failed to post to Tumblr.')
+				send_message(
+					url=source_cfg['webhooks']['tumblr'],
+					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+					embed=DiscordEmbed(
+						title='Error',
+						description='Failed to post to Tumblr.',
+						color=0xFF0000
+					)
+				)
 
 		if source_cfg['bluesky']['enabled']:
 			try:
 				bluesky(source_cfg['bluesky'], img)
 			except Exception:
 				log.error('Failed to post to Bluesky.')
+				send_message(
+					url=source_cfg['webhooks']['bluesky'],
+					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+					embed=DiscordEmbed(
+						title='Error',
+						description='Failed to post to Bluesky.',
+						color=0xFF0000
+					)
+				)
 
 		img.cleanup()
 
@@ -100,7 +131,7 @@ async def main():
 	cfg.validate(should_exit=True)
 
 	while True:
-    # run loop 15s early to account for img fetching
+		# run loop 15s early to account for img fetching
 		current_time = datetime.now()
 		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second - 15, microseconds=-current_time.microsecond)
 
@@ -110,4 +141,8 @@ async def main():
 		await post()
 
 if __name__ == '__main__':
-	asyncio.run(main())
+	try:
+		asyncio.run(main())
+	except KeyboardInterrupt:
+		log.info('Exiting...')
+		exit()

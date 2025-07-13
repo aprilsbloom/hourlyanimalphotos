@@ -225,7 +225,7 @@ class Config:
     # if a social media platform is enabled, ensure all keys are set
     has_found_enabled_source = False
     for source in self.cfg:
-      source_cfg = self.cfg[source]
+      source_cfg: AnimalConfig = self.cfg[source]
 
       # skip if not enabled
       if not source_cfg['enabled']:
@@ -296,9 +296,12 @@ class Config:
           exit_needed = True
 
       # discord webhook
-      for platform, webhook_url in source_cfg['discord_webhooks'].items():
-        if webhook_url and not webhook_url.startswith("https://discord.com/api/webhooks/"):
-          self.log.error(f'Discord webhook URL for {platform} in source "{source}" ("{source_cfg["name"]}") doesn\'t appear to be valid.')
+      for platform, webhook_url in source_cfg['webhooks'].items():
+        if webhook_url and not str(webhook_url).startswith("https://discord.com/api/webhooks/"):
+          self.log.error(f'Discord webhook URL for {platform} in source "{source}" ("{source_cfg["name"]}") is invalid.')
+          source_cfg['webhooks'][platform] = ''
+          self.save()
+          exit_needed = True
 
     if not has_found_enabled_source:
       self.log.error('No enabled sources found. Please enable at least one source.')

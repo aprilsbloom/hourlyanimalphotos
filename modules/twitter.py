@@ -1,12 +1,15 @@
+import json
 import time
 import traceback
 from datetime import datetime
 
+from discord_webhook import DiscordEmbed
 import tweepy
 from tweepy import errors
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.config import TwitterConfig
+from utils.config import AnimalConfig
+from utils.discord import DiscordFile, send_message
 from utils.image import SourceImage
 from utils.logger import Logger
 from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
@@ -15,7 +18,7 @@ log = Logger("Twitter")
 
 # current API ratelimit says max of 17 every 24hrs
 @retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
-def twitter(twitter_cfg: TwitterConfig, img: SourceImage):
+def twitter(source_cfg: AnimalConfig, img: SourceImage):
 	# only post on even hours (0, 2, 4, ...)
 	current_hour = datetime.now().hour
 	if current_hour % 2 != 0:
@@ -25,10 +28,10 @@ def twitter(twitter_cfg: TwitterConfig, img: SourceImage):
 	log.info('Posting to Twitter')
 
 	try:
-		consumer_key = twitter_cfg['consumer_key']
-		consumer_secret = twitter_cfg['consumer_secret']
-		access_token = twitter_cfg['access_token']
-		access_token_secret = twitter_cfg['access_token_secret']
+		consumer_key = source_cfg['twitter']['consumer_key']
+		consumer_secret = source_cfg['twitter']['consumer_secret']
+		access_token = source_cfg['twitter']['access_token']
+		access_token_secret = source_cfg['twitter']['access_token_secret']
 
 		auth = tweepy.OAuth1UserHandler(
 			consumer_key = consumer_key,
@@ -47,6 +50,16 @@ def twitter(twitter_cfg: TwitterConfig, img: SourceImage):
 		)
 	except Exception:
 		log.error('An error occurred while authenticating:', traceback.format_exc())
+		send_message(
+			url=source_cfg['webhooks']['twitter'],
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Failed to authenticate to Twitter.',
+				color=0xFF0000
+			)
+		)
+
 		log.info('Retrying')
 		return
 
@@ -56,6 +69,16 @@ def twitter(twitter_cfg: TwitterConfig, img: SourceImage):
 		img = v1.chunked_upload(filename=str(img.path), media_category="tweet_image").media_id_string
 	except Exception:
 		log.error('An error occured while uploading the image:', traceback.format_exc())
+		send_message(
+			url=source_cfg['webhooks']['twitter'],
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Failed to upload image to Twitter.',
+				color=0xFF0000
+			)
+		)
+
 		log.info('Retrying')
 		return
 
@@ -67,9 +90,29 @@ def twitter(twitter_cfg: TwitterConfig, img: SourceImage):
 		response = v2.create_tweet(text = "", media_ids = [ img ])
 	except errors.TooManyRequests:
 		log.error('Rate limit exceeded! Skipping post')
+		send_message(
+			url=source_cfg['webhooks']['twitter'],
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Rate limit exceeded! Skipping post',
+				color=0xFF0000
+			)
+		)
+
 		return True
 	except Exception:
 		log.error('An error occured while posting the image (exception):', traceback.format_exc())
+		send_message(
+			url=source_cfg['webhooks']['twitter'],
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Failed to post to Twitter.',
+				color=0xFF0000
+			)
+		)
+
 		log.info('Retrying')
 		return
 
@@ -79,4 +122,14 @@ def twitter(twitter_cfg: TwitterConfig, img: SourceImage):
 		return True
 	else:
 		log.error('An error occurred while posting the image (response):', response.errors) # type: ignore
+		send_message(
+			url=source_cfg['webhooks']['twitter'],
+			file=DiscordFile(bytes(json.dumps(response, indent=4), 'utf-8'), 'response.json'),
+			embed=DiscordEmbed(
+				title='Error',
+				description='Failed to post to Twitter.',
+				color=0xFF0000
+			)
+		)
+
 		return
