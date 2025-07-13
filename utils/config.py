@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 import copy
-from typing import Dict, Any, TypedDict, Optional, List
+from typing import TypedDict, List, Literal
 import json
 
 from requests_oauthlib import OAuth1Session
@@ -9,6 +9,7 @@ from requests_oauthlib import OAuth1Session
 from utils.logger import Logger
 from utils.constants import CAT_TAGS, DOG_TAGS
 
+AnimalType = Literal['cat', 'dog']
 
 class ConfigType(TypedDict):
   cat: AnimalConfig
@@ -17,6 +18,7 @@ class ConfigType(TypedDict):
 
 class AnimalConfig(TypedDict):
   enabled: bool
+  key: AnimalType
   name: str
   api_key: str
   twitter: TwitterConfig
@@ -58,6 +60,7 @@ class Config:
     self.cfg = ConfigType(
       cat=AnimalConfig(
         enabled=False,
+        key="cat",
         name="TheCatAPI",
         api_key="",
         twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
@@ -74,6 +77,7 @@ class Config:
       ),
       dog=AnimalConfig(
         enabled=False,
+        key="dog",
         name="TheDogAPI",
         api_key="",
         twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
@@ -111,7 +115,8 @@ class Config:
     self.cfg = ConfigType(
       cat=AnimalConfig(
         enabled=cat_config.get("enabled", True),
-        name=cat_config.get("name", "TheCatAPI"),
+        key="cat",
+        name="TheCatAPI",
         api_key=cat_config.get("api_key", ""),
         twitter=TwitterConfig(
           enabled=cat_twitter.get("enabled", False),
@@ -137,7 +142,8 @@ class Config:
       ),
       dog=AnimalConfig(
         enabled=dog_config.get("enabled", True),
-        name=dog_config.get("name", "TheDogAPI"),
+        key="dog",
+        name="TheDogAPI",
         api_key=dog_config.get("api_key", ""),
         twitter=TwitterConfig(
           enabled=dog_twitter.get("enabled", False),

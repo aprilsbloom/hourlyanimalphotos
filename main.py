@@ -79,8 +79,6 @@ async def post():
 				log.error('Failed to post to Twitter.')
 
 		if source_cfg['tumblr']['enabled']:
-
-
 			try:
 				tumblr(source_cfg['tumblr'], img)
 			except Exception:
