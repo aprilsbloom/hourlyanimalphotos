@@ -80,7 +80,7 @@ async def post():
 				log.error('Failed to post to Twitter.')
 				send_message(
 					url=source_cfg['webhooks']['twitter'],
-					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 					embed=DiscordEmbed(
 						title='Error',
 						description='Failed to post to Twitter.',
@@ -95,7 +95,7 @@ async def post():
 				log.error('Failed to post to Tumblr.')
 				send_message(
 					url=source_cfg['webhooks']['tumblr'],
-					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 					embed=DiscordEmbed(
 						title='Error',
 						description='Failed to post to Tumblr.',
@@ -110,7 +110,7 @@ async def post():
 				log.error('Failed to post to Bluesky.')
 				send_message(
 					url=source_cfg['webhooks']['bluesky'],
-					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 					embed=DiscordEmbed(
 						title='Error',
 						description='Failed to post to Bluesky.',

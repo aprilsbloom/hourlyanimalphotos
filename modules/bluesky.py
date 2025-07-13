@@ -26,7 +26,7 @@ def bluesky(source_cfg: AnimalConfig, img: SourceImage):
 		log.error('An error occurred while authenticating:', traceback.format_exc())
 		send_message(
 			url=source_cfg['webhooks']['bluesky'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 			embed=DiscordEmbed(
 				title='Error',
 				description='Failed to authenticate to Bluesky.',
@@ -52,7 +52,7 @@ def bluesky(source_cfg: AnimalConfig, img: SourceImage):
 		log.error('An error occurred while posting the image:', traceback.format_exc())
 		send_message(
 			url=source_cfg['webhooks']['bluesky'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 			embed=DiscordEmbed(
 				title='Error',
 				description='Failed to post to Bluesky.',

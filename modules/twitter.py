@@ -51,7 +51,7 @@ def twitter(source_cfg: AnimalConfig, img: SourceImage):
 		log.error('An error occurred while authenticating:', traceback.format_exc())
 		send_message(
 			url=source_cfg['webhooks']['twitter'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 			embed=DiscordEmbed(
 				title='Error',
 				description='Failed to authenticate to Twitter.',
@@ -70,7 +70,7 @@ def twitter(source_cfg: AnimalConfig, img: SourceImage):
 		log.error('An error occured while uploading the image:', traceback.format_exc())
 		send_message(
 			url=source_cfg['webhooks']['twitter'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 			embed=DiscordEmbed(
 				title='Error',
 				description='Failed to upload image to Twitter.',
@@ -91,7 +91,7 @@ def twitter(source_cfg: AnimalConfig, img: SourceImage):
 		log.error('Rate limit exceeded! Skipping post')
 		send_message(
 			url=source_cfg['webhooks']['twitter'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 			embed=DiscordEmbed(
 				title='Error',
 				description='Rate limit exceeded! Skipping post',
@@ -104,7 +104,7 @@ def twitter(source_cfg: AnimalConfig, img: SourceImage):
 		log.error('An error occured while posting the image (exception):', traceback.format_exc())
 		send_message(
 			url=source_cfg['webhooks']['twitter'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'traceback.txt'),
+			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
 			embed=DiscordEmbed(
 				title='Error',
 				description='Failed to post to Twitter.',
