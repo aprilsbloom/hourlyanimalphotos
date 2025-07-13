@@ -4,7 +4,12 @@ It fetches images from both [TheCatAPI](https://thecatapi.com/) & [TheDogAPI](ht
 
 ## Setup
 1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
-2. Activate the virtual environment
+2. Create a virtual environment
+```sh
+uv venv
+```
+
+3. Activate the virtual environment
 ```sh
 # Linux
 source .venv/bin/activate
@@ -13,14 +18,14 @@ source .venv/bin/activate
 .venv\Scripts\activate
 ```
 
-3. Install the dependencies
+4. Install the dependencies
 ```sh
 uv pip install -r requirements.txt
 ```
 
-4. Run the program
+5. Run the program
 ```sh
 py main.py
 ```
 
-5. It will prompt you to enter your credentials
+6. Enter your credentials in `config.json`. The program will tell you what is incorrect and where to fix it.
