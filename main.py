@@ -78,7 +78,7 @@ async def post():
 		# if everything is successful, post the image to all the platforms
 		if source_cfg['twitter']['enabled']:
 			try:
-				twitter(source_cfg['twitter'], img)
+				twitter(source_cfg, img)
 			except Exception:
 				log.error('Failed to post to Twitter.')
 				send_message(
@@ -93,7 +93,7 @@ async def post():
 
 		if source_cfg['tumblr']['enabled']:
 			try:
-				tumblr(source_cfg['tumblr'], img)
+				tumblr(source_cfg, img)
 			except Exception:
 				log.error('Failed to post to Tumblr.')
 				send_message(
@@ -108,7 +108,7 @@ async def post():
 
 		if source_cfg['bluesky']['enabled']:
 			try:
-				bluesky(source_cfg['bluesky'], img)
+				bluesky(source_cfg, img)
 			except Exception:
 				log.error('Failed to post to Bluesky.')
 				send_message(
@@ -131,7 +131,7 @@ async def main():
 	cfg.validate(should_exit=True)
 
 	while True:
-		# run loop 15s early to account for img fetching
+    # run loop 15s early to account for img fetching
 		current_time = datetime.now()
 		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second - 15, microseconds=-current_time.microsecond)
 
@@ -139,6 +139,7 @@ async def main():
 		await asyncio.sleep((goal_timestamp - current_time).total_seconds())
 
 		await post()
+
 
 if __name__ == '__main__':
 	try:
