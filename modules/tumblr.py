@@ -4,14 +4,14 @@ import time
 import pytumblr
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.config import TumblrConfig
-from utils.globals import cfg
+from utils.config import cfg, TumblrConfig
 from utils.image import SourceImage
 from utils.logger import Logger
+from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 
 log = Logger("Tumblr")
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(5))
+@retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
 def tumblr(tumblr_cfg: TumblrConfig, img: SourceImage):
 	log.info('Posting to Tumblr')
 
@@ -28,8 +28,6 @@ def tumblr(tumblr_cfg: TumblrConfig, img: SourceImage):
 		log.error('An error occurred while authenticating:', traceback.format_exc())
 		log.info('Retrying')
 		return
-
-	log.info('Posting image')
 
 	try:
 		response = tumblr.create_photo(

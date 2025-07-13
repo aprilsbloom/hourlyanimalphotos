@@ -5,22 +5,23 @@ import tweepy
 from tweepy import errors
 from tenacity import retry, retry_if_result, stop_after_attempt
 
-from utils.config import AnimalConfig
+from utils.config import TwitterConfig
 from utils.image import SourceImage
 from utils.logger import Logger
+from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 
 log = Logger("Twitter")
 
 
-@retry(stop=stop_after_attempt(3), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(5))
-def twitter(cfg: AnimalConfig, img: SourceImage):
+@retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
+def twitter(cfg: TwitterConfig, img: SourceImage):
 	log.info('Posting to Twitter')
 
 	try:
-		consumer_key = cfg['twitter']['consumer_key']
-		consumer_secret = cfg['twitter']['consumer_secret']
-		access_token = cfg['twitter']['access_token']
-		access_token_secret = cfg['twitter']['access_token_secret']
+		consumer_key = cfg['consumer_key']
+		consumer_secret = cfg['consumer_secret']
+		access_token = cfg['access_token']
+		access_token_secret = cfg['access_token_secret']
 
 		auth = tweepy.OAuth1UserHandler(
 			consumer_key = consumer_key,
@@ -63,6 +64,10 @@ def twitter(cfg: AnimalConfig, img: SourceImage):
 		log.error('An error occured while posting the image (exception):', traceback.format_exc())
 		log.info('Retrying')
 		return
+
+	# log ratelimit status
+	ratelimit_status = v1.rate_limit_status(resources='statuses')
+	log.info('Ratelimit status:', ratelimit_status)
 
 	# check response
 	if response.data and response.errors == []: # type: ignore

@@ -10,9 +10,9 @@ from requests_oauthlib import OAuth1Session
 
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
-from utils.config import Config, TumblrConfig
+from utils.config import cfg, Config, TumblrConfig
 from utils.image import SourceImage
-from utils.globals import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, cfg
+from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY
 from utils.logger import Logger
 
 log = Logger("Main")
@@ -76,19 +76,19 @@ async def post():
 		# if everything is successful, post the image to all the platforms
 		if source_cfg['twitter']['enabled']:
 			try:
-				twitter(source_cfg, img)
+				twitter(source_cfg['twitter'], img)
 			except Exception:
 				log.error('Failed to post to Twitter.')
 
 		if source_cfg['tumblr']['enabled']:
 			try:
-				tumblr(source_cfg, img)
+				tumblr(source_cfg['tumblr'], img)
 			except Exception:
 				log.error('Failed to post to Tumblr.')
 
 		if source_cfg['bluesky']['enabled']:
 			try:
-				bluesky(source_cfg, img)
+				bluesky(source_cfg['bluesky'], img)
 			except Exception:
 				log.error('Failed to post to Bluesky.')
 

@@ -3,7 +3,7 @@ import requests
 from sources import ImageSource
 from utils.config import Config
 from utils.logger import Logger
-from utils.globals import BASE_HEADERS, REQUEST_TIMEOUT
+from utils.constants import BASE_HEADERS, REQUEST_TIMEOUT
 
 class CatAPI(ImageSource):
   def __init__(self, cfg: Config):

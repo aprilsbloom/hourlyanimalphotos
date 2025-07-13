@@ -1,10 +1,11 @@
 from typing import Dict, Final
 
-from utils.config import Config
-
 # ---- Misc ---- #
 IMG_EXTENSIONS = ["jpg", "png", "jpeg", "webp"]
 MAX_IMG_FETCH_RETRY = 3
+
+MAX_POST_RETRY = 3
+POST_RETRY_SLEEP = 5
 
 CAT_TAGS = {
   "cat",
@@ -55,7 +56,3 @@ BASE_HEADERS: Final[Dict[str, str]] = {
 	"Accept-Encoding": "gzip, deflate, br",
 	"Connection": "keep-alive",
 }
-
-
-
-cfg = Config("config.json")

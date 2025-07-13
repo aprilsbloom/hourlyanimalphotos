@@ -2,7 +2,7 @@ import requests
 
 from sources import ImageSource
 from utils.config import Config
-from utils.globals import BASE_HEADERS, REQUEST_TIMEOUT
+from utils.constants import BASE_HEADERS, REQUEST_TIMEOUT
 from utils.logger import Logger
 
 class DogAPI(ImageSource):

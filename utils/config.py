@@ -4,7 +4,7 @@ import copy
 from typing import Dict, Any, TypedDict, Optional, List
 import json
 
-from utils.globals import CAT_TAGS, DOG_TAGS
+from utils.constants import CAT_TAGS, DOG_TAGS
 
 
 class ConfigType(TypedDict):
@@ -59,7 +59,7 @@ class Config:
         twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
         tumblr=TumblrConfig(
           enabled=False,
-          tags=CAT_TAGS,
+          tags=list(CAT_TAGS),
           blogname="",
           consumer_key="",
           consumer_secret="",
@@ -73,7 +73,7 @@ class Config:
         name="TheDogAPI",
         api_key="",
         twitter=TwitterConfig(enabled=False, consumer_key="", consumer_secret="", access_token="", access_token_secret=""),
-        tumblr=TumblrConfig(enabled=False, tags=[], blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
+        tumblr=TumblrConfig(enabled=False, tags=list(DOG_TAGS), blogname="", consumer_key="", consumer_secret="", oauth_token="", oauth_token_secret=""),
         bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
       )
     )
@@ -117,7 +117,7 @@ class Config:
         ),
         tumblr=TumblrConfig(
           enabled=cat_tumblr.get("enabled", False),
-          tags=cat_tumblr.get("tags", CAT_TAGS),
+          tags=cat_tumblr.get("tags", list(CAT_TAGS)),
           blogname=cat_tumblr.get("blogname", ""),
           consumer_key=cat_tumblr.get("consumer_key", ""),
           consumer_secret=cat_tumblr.get("consumer_secret", ""),
@@ -143,7 +143,7 @@ class Config:
         ),
         tumblr=TumblrConfig(
           enabled=dog_tumblr.get("enabled", False),
-          tags=dog_tumblr.get("tags", DOG_TAGS),
+          tags=dog_tumblr.get("tags", list(DOG_TAGS)),
           blogname=dog_tumblr.get("blogname", ""),
           consumer_key=dog_tumblr.get("consumer_key", ""),
           consumer_secret=dog_tumblr.get("consumer_secret", ""),
@@ -163,3 +163,5 @@ class Config:
 
   def __str__(self) -> str:
     return json.dumps(self.cfg, indent=2, ensure_ascii=False)
+
+cfg = Config("config.json")
