@@ -12,6 +12,7 @@ from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 
 log = Logger("Twitter")
 
+# current API ratelimit says max of 17 every 24hrs
 
 @retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
 def twitter(cfg: TwitterConfig, img: SourceImage):
@@ -64,10 +65,6 @@ def twitter(cfg: TwitterConfig, img: SourceImage):
 		log.error('An error occured while posting the image (exception):', traceback.format_exc())
 		log.info('Retrying')
 		return
-
-	# log ratelimit status
-	ratelimit_status = v1.rate_limit_status(resources='statuses')
-	log.info('Ratelimit status:', ratelimit_status)
 
 	# check response
 	if response.data and response.errors == []: # type: ignore

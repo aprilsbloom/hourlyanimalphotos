@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import List, cast
 
 import filetype
-import requests
+import shutil
 from PIL import Image
 from requests_oauthlib import OAuth1Session
 
@@ -81,6 +81,8 @@ async def post():
 				log.error('Failed to post to Twitter.')
 
 		if source_cfg['tumblr']['enabled']:
+
+
 			try:
 				tumblr(source_cfg['tumblr'], img)
 			except Exception:
@@ -97,107 +99,9 @@ async def post():
 	print()
 
 
-def init_tumblr_oauth(cfg: Config, tumblr_cfg: TumblrConfig) -> None:
-	tumblr_log = Logger("Tumblr")
-	request_token_url = 'http://www.tumblr.com/oauth/request_token'
-	authorize_url = 'http://www.tumblr.com/oauth/authorize'
-	access_token_url = 'http://www.tumblr.com/oauth/access_token'
-
-	# STEP 1: Obtain request token
-	oauth_session = OAuth1Session(tumblr_cfg['consumer_key'], client_secret=tumblr_cfg['consumer_secret'])
-	fetch_response = oauth_session.fetch_request_token(request_token_url)
-
-	resource_owner_key = fetch_response.get('oauth_token')
-	resource_owner_secret = fetch_response.get('oauth_token_secret')
-
-	# redirect to authentication page
-	full_authorize_url = oauth_session.authorization_url(authorize_url)
-	tumblr_log.info(f'Please visit this URL and authorize: {full_authorize_url}')
-	redirect_response = tumblr_log.input('Paste the full redirect URL here: ').strip()
-
-	# retrieve verifier
-	oauth_response = oauth_session.parse_authorization_response(redirect_response)
-	verifier = oauth_response.get('oauth_verifier')
-
-	# request final access token
-	oauth_session = OAuth1Session(
-		tumblr_cfg['consumer_key'],
-		client_secret=tumblr_cfg['consumer_secret'],
-		resource_owner_key=resource_owner_key,
-		resource_owner_secret=resource_owner_secret,
-		verifier=verifier
-	)
-
-	oauth_tokens = oauth_session.fetch_access_token(access_token_url)
-	tumblr_cfg['oauth_token'] = oauth_tokens.get('oauth_token', '')
-	tumblr_cfg['oauth_token_secret'] = oauth_tokens.get('oauth_token_secret', '')
-	cfg.save()
-
-	tumblr_log.success('Tumblr oauth token and secret have been set.')
-
-
-def validate_cfg() -> None:
-	# validate cfg entries
-	# if a social media platform is enabled, ensure all keys are set
-	has_found_enabled_source = False
-	for source in cfg.cfg:
-		source_cfg = cfg.cfg[source]
-
-		# skip if not enabled
-		if not source_cfg['enabled']:
-			continue
-
-		has_found_enabled_source = True
-
-		# needs an api key to function lol
-		if not source_cfg['api_key']:
-			log.error(f'API key is not set for source "{source}" ("{source_cfg["name"]}"). Please set it in config.json.')
-			os._exit(1)
-
-    # twitter
-		if source_cfg['twitter']['enabled']:
-			twitter_keys = ['consumer_key', 'consumer_secret', 'access_token', 'access_token_secret']
-			missing_keys = []
-			for key in twitter_keys:
-				if not source_cfg['twitter'][key]:
-					missing_keys.append(key)
-
-			if len(missing_keys) > 0:
-				log.error(f'The following keys for Twitter in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
-				os._exit(1)
-
-		# tumblr
-		if source_cfg['tumblr']['enabled']:
-			tumblr_keys = ['blogname', 'consumer_key', 'consumer_secret']
-			missing_keys = []
-			for key in tumblr_keys:
-				if not source_cfg['tumblr'][key]:
-					missing_keys.append(key)
-
-			if len(missing_keys) > 0:
-				log.error(f'The following keys for Tumblr in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
-				os._exit(1)
-
-			if not source_cfg['tumblr']['oauth_token'] or not source_cfg['tumblr']['oauth_token_secret']:
-				init_tumblr_oauth(cfg, source_cfg['tumblr'])
-
-		# bluesky
-		if source_cfg['bluesky']['enabled']:
-			bluesky_keys = ['username', 'app_password']
-			for key in bluesky_keys:
-				if not source_cfg['bluesky'][key]:
-					missing_keys.append(key)
-
-			if len(missing_keys) > 0:
-				log.error(f'The following keys for Bluesky in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
-				os._exit(1)
-
-	if not has_found_enabled_source:
-		log.error('No enabled sources found. Please enable at least one source in config.json.')
-		os._exit(1)
-
 async def main():
-	validate_cfg()
+	shutil.rmtree('jobs', ignore_errors=True)
+	cfg.validate()
 
 	await post()
 

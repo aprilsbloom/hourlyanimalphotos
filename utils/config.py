@@ -4,6 +4,9 @@ import copy
 from typing import Dict, Any, TypedDict, Optional, List
 import json
 
+from requests_oauthlib import OAuth1Session
+
+from utils.logger import Logger
 from utils.constants import CAT_TAGS, DOG_TAGS
 
 
@@ -48,6 +51,7 @@ class BlueskyConfig(TypedDict):
 class Config:
   path: str
   cfg: ConfigType
+  log: Logger
 
   def __init__(self, path: str):
     self.path = path
@@ -77,6 +81,7 @@ class Config:
         bluesky=BlueskyConfig(enabled=False, username="", app_password=""),
       )
     )
+    self.log = Logger("Config")
 
     self.load()
 
@@ -160,6 +165,108 @@ class Config:
 
     if old_cfg != self.cfg:
       self.save()
+
+  def validate(self, should_exit: bool = True) -> None:
+    exit = lambda: os._exit(1) if should_exit else None
+
+    # validate cfg entries
+    # if a social media platform is enabled, ensure all keys are set
+    has_found_enabled_source = False
+    for source in self.cfg:
+      source_cfg = self.cfg[source]
+
+      # skip if not enabled
+      if not source_cfg['enabled']:
+        continue
+
+      has_found_enabled_source = True
+
+      # needs an api key to function lol
+      if not source_cfg['api_key']:
+        self.log.error(f'API key is not set for source "{source}" ("{source_cfg["name"]}"). Please set it in config.json.')
+        return exit()
+
+      # twitter
+      if source_cfg['twitter']['enabled']:
+        twitter_keys = ['consumer_key', 'consumer_secret', 'access_token', 'access_token_secret']
+        missing_keys = []
+        for key in twitter_keys:
+          if not source_cfg['twitter'][key]:
+            missing_keys.append(key)
+
+        if len(missing_keys) > 0:
+          self.log.error(f'The following keys for Twitter in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          return exit()
+
+      # tumblr
+      if source_cfg['tumblr']['enabled']:
+        tumblr_keys = ['blogname', 'consumer_key', 'consumer_secret']
+        missing_keys = []
+        for key in tumblr_keys:
+          if not source_cfg['tumblr'][key]:
+            missing_keys.append(key)
+
+        if len(missing_keys) > 0:
+          self.log.error(f'The following keys for Tumblr in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          return exit()
+
+        if not source_cfg['tumblr']['oauth_token'] or not source_cfg['tumblr']['oauth_token_secret']:
+          self.init_tumblr_oauth(source_cfg)
+
+      # bluesky
+      if source_cfg['bluesky']['enabled']:
+        bluesky_keys = ['username', 'app_password']
+        missing_keys = []
+        for key in bluesky_keys:
+          if not source_cfg['bluesky'][key]:
+            missing_keys.append(key)
+
+        if len(missing_keys) > 0:
+          self.log.error(f'The following keys for Bluesky in source "{source}" ("{source_cfg["name"]}") are not set: {", ".join(missing_keys)}. Please set them in config.json.')
+          return exit()
+
+    if not has_found_enabled_source:
+      self.log.error('No enabled sources found. Please enable at least one source in config.json.')
+      return exit()
+
+  def init_tumblr_oauth(self, source_cfg: AnimalConfig) -> None:
+    tumblr_log = Logger("Tumblr")
+    request_token_url = 'http://www.tumblr.com/oauth/request_token'
+    authorize_url = 'http://www.tumblr.com/oauth/authorize'
+    access_token_url = 'http://www.tumblr.com/oauth/access_token'
+
+    # obtain request token
+    oauth_session = OAuth1Session(source_cfg['tumblr']['consumer_key'], client_secret=source_cfg['tumblr']['consumer_secret'])
+    fetch_response = oauth_session.fetch_request_token(request_token_url)
+
+    resource_owner_key = fetch_response.get('oauth_token')
+    resource_owner_secret = fetch_response.get('oauth_token_secret')
+
+    # redirect to authentication page
+    full_authorize_url = oauth_session.authorization_url(authorize_url)
+    tumblr_log.info(f'Oauth tokens are missing for source "{source_cfg["name"]}".')
+    tumblr_log.info(f'Please visit this URL and authorize (make sure you are signed into blog "{source_cfg["tumblr"]["blogname"]}"): {full_authorize_url}')
+    redirect_response = tumblr_log.input('Paste the full redirect URL here: ').strip()
+
+    # retrieve verifier
+    oauth_response = oauth_session.parse_authorization_response(redirect_response)
+    verifier = oauth_response.get('oauth_verifier')
+
+    # request final access token
+    oauth_session = OAuth1Session(
+      source_cfg['tumblr']['consumer_key'],
+      client_secret=source_cfg['tumblr']['consumer_secret'],
+      resource_owner_key=resource_owner_key,
+      resource_owner_secret=resource_owner_secret,
+      verifier=verifier
+    )
+
+    oauth_tokens = oauth_session.fetch_access_token(access_token_url)
+    source_cfg['tumblr']['oauth_token'] = oauth_tokens.get('oauth_token', '')
+    source_cfg['tumblr']['oauth_token_secret'] = oauth_tokens.get('oauth_token_secret', '')
+    self.save()
+
+    tumblr_log.success('Tumblr oauth token and secret have been set.')
 
   def __str__(self) -> str:
     return json.dumps(self.cfg, indent=2, ensure_ascii=False)
