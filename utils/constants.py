@@ -32,6 +32,8 @@ CAT_TAGS = [
   "kitty cats",
   "kitty cat photo",
   "kitty cat photos",
+
+  "meow",
 ]
 
 DOG_TAGS = [
@@ -49,6 +51,9 @@ DOG_TAGS = [
   "hourly dogs",
   "hourly dog photo",
   "hourly dog photos",
+
+  "bark",
+  "woof",
 ]
 
 REQUEST_TIMEOUT: Final[int] = 30
