@@ -130,7 +130,7 @@ async def main():
 	while True:
     # run loop 15s early to account for img fetching
 		current_time = datetime.now()
-		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second - 15, microseconds=-current_time.microsecond)
+		goal_timestamp = current_time + timedelta(hours = 1, minutes = -current_time.minute, seconds = -current_time.second, microseconds=-current_time.microsecond)
 
 		log.info(f'Posting at: {goal_timestamp.strftime("%H:%M:%S")}')
 		await asyncio.sleep((goal_timestamp - current_time).total_seconds())

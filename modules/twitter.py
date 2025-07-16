@@ -39,13 +39,12 @@ def twitter(source_cfg: AnimalConfig, img: SourceImage):
 			access_token_secret = access_token_secret
 		)
 
-		v1 = tweepy.API(auth, wait_on_rate_limit=True)
+		v1 = tweepy.API(auth)
 		v2 = tweepy.Client(
 			consumer_key=consumer_key,
 			consumer_secret=consumer_secret,
 			access_token=access_token,
-			access_token_secret=access_token_secret,
-			wait_on_rate_limit=True
+			access_token_secret=access_token_secret
 		)
 	except Exception:
 		log.error('An error occurred while authenticating:', traceback.format_exc())
