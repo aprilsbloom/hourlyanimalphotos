@@ -43,7 +43,11 @@ class CatAPI(ImageSource):
     )
 
     # catapi returns a list of images
-    data = res.json()
+    try;
+      data = res.json()
+    except:
+      return
+
     if isinstance(data, list):
       data = data[0]
 
