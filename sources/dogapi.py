@@ -43,7 +43,7 @@ class DogAPI(ImageSource):
     )
 
     # dogapi returns a list of images
-    try;
+    try:
       data = res.json()
     except:
       return
