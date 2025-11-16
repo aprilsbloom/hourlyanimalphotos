@@ -9,7 +9,6 @@ import shutil
 from modules import bluesky, tumblr, twitter
 from sources import CatAPI, DogAPI, ImageSource
 from utils.config import cfg
-from utils.discord import DiscordEmbed, DiscordFile, send_message
 from utils.image import SourceImage
 from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, MAX_IMG_SIZE_MB
 from utils.logger import Logger
@@ -73,50 +72,9 @@ async def post():
 				img.resize(width, height, 90)
 
 		# if everything is successful, post the image to all the platforms
-		if source_cfg['twitter']['enabled']:
-			try:
-				twitter(source_cfg, img)
-			except Exception:
-				log.error('Failed to post to Twitter.')
-				send_message(
-					url=source_cfg['webhooks']['twitter'],
-					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
-					embed=DiscordEmbed(
-						title='Error',
-						description='Failed to post to Twitter.',
-						color=0xFF0000
-					)
-				)
-
-		if source_cfg['tumblr']['enabled']:
-			try:
-				tumblr(source_cfg, img)
-			except Exception:
-				log.error('Failed to post to Tumblr.')
-				send_message(
-					url=source_cfg['webhooks']['tumblr'],
-					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
-					embed=DiscordEmbed(
-						title='Error',
-						description='Failed to post to Tumblr.',
-						color=0xFF0000
-					)
-				)
-
-		if source_cfg['bluesky']['enabled']:
-			try:
-				bluesky(source_cfg, img)
-			except Exception:
-				log.error('Failed to post to Bluesky.')
-				send_message(
-					url=source_cfg['webhooks']['bluesky'],
-					file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
-					embed=DiscordEmbed(
-						title='Error',
-						description='Failed to post to Bluesky.',
-						color=0xFF0000
-					)
-				)
+		await twitter(source_cfg, img)
+		await tumblr(source_cfg, img)
+		await bluesky(source_cfg, img)
 
 		img.cleanup()
 

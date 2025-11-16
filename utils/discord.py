@@ -1,139 +1,87 @@
-from __future__ import annotations
-
+import io
 import json
-import time
-from typing import List, Optional
+import traceback
+from typing import List
 
+import aiohttp
+import discord
 import requests
 
-class DiscordWebhook:
-  content: str = ""
-  embeds: Optional[List[DiscordEmbed]] = None
-  files: Optional[List[DiscordFile]] = None
 
-  def __init__(self, url: str, rate_limit_retry: bool = True):
-    self.url = url
-    self.rate_limit_retry = rate_limit_retry
-
-  def add_embed(self, embed: DiscordEmbed):
-    if not self.embeds:
-      self.embeds = []
-
-    self.embeds.append(embed)
-
-  def add_file(self, file: DiscordFile):
-    if not self.files:
-      self.files = []
-
-    self.files.append(file)
-
-  def execute(self):
-    request = {}
-
-    if self.content:
-      request['content'] = self.content
-
-    if self.embeds:
-      request['embeds'] = [embed.to_dict() for embed in self.embeds]
-
-    if self.files:
-      request['attachments'] = []
-
-      file_count = 0
-      for file in self.files:
-        request['attachments'].append({
-          'id': file_count,
-          'filename': file.filename,
-        })
-
-    # if request['attachments'], we need to send multipart form data request
-    # the json is in the param 'payload_json'
-    # the files are in the param name 'file[id]'
-    # each file has a filename attribute
-
-    if request['attachments']:
-      payload_json = json.dumps(request)
-      form_data = {'payload_json': payload_json}
-      file_data = {}
-
-      if self.files:
-        for id, file in enumerate(self.files):
-          file_data[f'files[{id}]'] = (file.filename, file.file)
-
-      max_retries = 5
-      retries = 0
-
-      while retries < max_retries:
-        response = requests.post(
-          self.url,
-          data=form_data,
-          files=file_data
-        )
-
-        if response.status_code == 429 and self.rate_limit_retry:
-          retry_after = response.json().get('retry_after', 5)
-          time.sleep(retry_after)
-          retries += 1
-          continue
-
-        return response
-    else:
-      response = requests.post(
-        self.url,
-        json=request
-      )
-      return response
-
-class DiscordEmbed:
-  def __init__(self, title: str, description: str, color: int):
-    self.title = title
-    self.description = description
-    self.color = color
-
-  def to_dict(self):
-    return {
-      'title': self.title,
-      'description': self.description,
-      'color': self.color
-    }
-
-class DiscordFile:
-  def __init__(self, file: bytes, filename: str):
-    self.file = file
-    self.filename = filename
-
-def send_message(
+async def send_to_webhook(
   url: str,
-  content: str = "",
-  *,
-  embed: Optional[DiscordEmbed] = None,
-  embeds: Optional[List[DiscordEmbed]] = None,
-  file: Optional[DiscordFile] = None,
-  files: Optional[List[DiscordFile]] = None
+  content: str = '',
+  embed: discord.Embed | None = None,
+  embeds: List[discord.Embed] = [],
+  file: discord.File | None = None,
+  files: List[discord.File] = [],
+  response: requests.Response | dict | None = None,
+  exception: Exception | str | None = None
 ):
-  if not url:
-    return None
+  async with aiohttp.ClientSession() as sess:
+    webhook = discord.Webhook.from_url(
+      url=url,
+      session=sess
+    )
 
-  webhook = DiscordWebhook(url=url, rate_limit_retry=True)
+    if len(embeds) == 0 and embed is not None:
+      embeds = [embed]
 
-  if content:
-    webhook.content = content
+    if len(files) == 0 and file is not None:
+      files = [file]
 
-  # embeds
-  if embed:
-    webhook.add_embed(embed)
+    # add the response to the file array
+    if response:
+      filename = 'response.txt'
+      content = response.text
 
-  if embeds:
-    for embed in embeds:
-      webhook.add_embed(embed)
+      if isinstance(response, dict) or hasattr(response, '__dict__'):
+        data = response if isinstance(response, dict) else response.__dict__
 
-  # files
-  if file:
-    webhook.add_file(file=file)
+        filename = 'response.json'
+        content = json.dumps(data, indent=2)
 
-  if files:
-    for file in files:
-      webhook.add_file(file=file)
+        files.append(discord.File(
+          fp=io.BytesIO(content.encode('utf-8')),
+          filename=filename
+        ))
+      elif isinstance(response, requests.Response):
+        # we only want to include the response if it's text-based
+        content_type = response.headers.get('content-type')
 
-  response = webhook.execute()
-  return response
+        if 'text' in content_type or 'json' in content_type:
+          # adjust filename if json obj
+          if 'json' in content_type:
+            filename = 'response.json'
+            content_obj = response.json()
+            content = json.dumps(content_obj, indent=2)
+
+          files.append(discord.File(
+            fp=io.BytesIO(content.encode('utf-8')),
+            filename=filename
+          ))
+
+
+    # add the exception to the file array
+    if exception:
+      if isinstance(exception, str):
+        exc_str = exception
+      else:
+        exc_str = traceback.format_exception(exception)
+
+      files.append(discord.File(
+        fp=io.BytesIO(
+          exc_str.encode('utf-8')
+        ),
+        filename='error.txt'
+      ))
+
+    try:
+      await webhook.send(
+        content,
+        embeds=embeds,
+        files=files
+      )
+    except Exception as e:
+      print(f'Failed to send webhook message to URL "{url}"', e)
+      traceback.print_exc()

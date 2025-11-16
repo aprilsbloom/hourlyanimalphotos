@@ -2,10 +2,13 @@ import traceback
 import time
 
 from atproto import Client
+from atproto_core.exceptions import AtProtocolError
 from tenacity import retry, retry_if_result, stop_after_attempt
 
+from discord import Embed
+
 from utils.config import AnimalConfig
-from utils.discord import DiscordEmbed, DiscordFile, send_message
+from utils.discord import send_to_webhook
 from utils.image import SourceImage
 from utils.logger import Logger
 from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
@@ -13,7 +16,12 @@ from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 log = Logger("Bluesky")
 
 @retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
-def bluesky(source_cfg: AnimalConfig, img: SourceImage):
+async def bluesky(source_cfg: AnimalConfig, img: SourceImage):
+	# skip if not enabled
+	if not source_cfg['bluesky']['enabled']:
+		log.info('Bluesky not enabled, skipping')
+		return True
+
 	log.info('Posting to Bluesky')
 
 	try:
@@ -22,16 +30,34 @@ def bluesky(source_cfg: AnimalConfig, img: SourceImage):
 			login = source_cfg['bluesky']['username'],
 			password = source_cfg['bluesky']['app_password']
 		)
-	except Exception:
-		log.error('An error occurred while authenticating:', traceback.format_exc())
-		send_message(
+	except AtProtocolError as e:
+		log.error('Failed to authenticate - Bluesky API returned an error.', traceback.format_exc())
+		embed = Embed(
+			title='Error',
+			description='Failed to authenticate - Bluesky API returned an error.',
+			color=0xFF0000
+		)
+		await send_to_webhook(
 			url=source_cfg['webhooks']['bluesky'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
-			embed=DiscordEmbed(
-				title='Error',
-				description='Failed to authenticate to Bluesky.',
-				color=0xFF0000
-			)
+			content='@everyone',
+			embed=embed,
+			exception=e
+		)
+
+		log.info('Retrying')
+		return False
+	except Exception as e:
+		log.error('Failed to authenticate:', traceback.format_exc())
+		embed = Embed(
+			title='Error',
+			description='Failed to authenticate.',
+			color=0xFF0000
+		)
+		await send_to_webhook(
+			url=source_cfg['webhooks']['bluesky'],
+			content='@everyone',
+			embed=embed,
+			exception=e
 		)
 
 		log.info('Retrying')
@@ -39,25 +65,56 @@ def bluesky(source_cfg: AnimalConfig, img: SourceImage):
 
 	log.info('Posting image')
 	try:
-		res = bs.send_image(
+		post_res = bs.send_image(
 			text = "",
 			image = img.read(),
 			image_alt = ""
 		)
 
-		url = res.uri.split('app.bsky.feed.')[1]
-		log.success(f'Posted image to Bluesky! Link: https://bsky.app/profile/{source_cfg["bluesky"]["username"]}/{url}')
-		return True
-	except Exception:
-		log.error('An error occurred while posting the image:', traceback.format_exc())
-		send_message(
+		post_id = post_res.uri.split('app.bsky.feed.')[1]
+		link = f'https://bsky.app/profile/{source_cfg["bluesky"]["username"]}/{post_id}'
+		log.success(f'Posted image to Bluesky! Link: {link}')
+
+		embed = Embed(
+			title='Success',
+			description='Successfully posted.',
+			color=0x00FF00
+		)
+		embed.add_field(name='URL', value=link)
+		await send_to_webhook(
 			url=source_cfg['webhooks']['bluesky'],
-			file=DiscordFile(bytes(traceback.format_exc(), 'utf-8'), 'error.txt'),
-			embed=DiscordEmbed(
-				title='Error',
-				description='Failed to post to Bluesky.',
-				color=0xFF0000
-			)
+			embed=embed,
+		)
+
+		return True
+	except AtProtocolError as e:
+		log.error('Failed to post - API returned an error.', traceback.format_exc())
+		embed = Embed(
+			title='Error',
+			description='Failed to post - API returned an error.',
+			color=0xFF0000
+		)
+		await send_to_webhook(
+			url=source_cfg['webhooks']['bluesky'],
+			content='@everyone',
+			embed=embed,
+			exception=e
+		)
+
+		log.info('Retrying')
+		return False
+	except Exception as e:
+		log.error('Failed to post:', traceback.format_exc())
+		embed = Embed(
+			title='Error',
+			description='Failed to post.',
+			color=0xFF0000
+		)
+		await send_to_webhook(
+			url=source_cfg['webhooks']['bluesky'],
+			content='@everyone',
+			embed=embed,
+			exception=e
 		)
 
 		log.info('Retrying')

@@ -45,9 +45,9 @@ class DogAPI(ImageSource):
     # dogapi returns a list of images
     try:
       data = res.json()
-    except:
+    except Exception:
       return
-    
+
     if isinstance(data, list):
       data = data[0]
 
