@@ -1,25 +1,21 @@
-import time
 import traceback
 
 from atproto import Client
 from atproto_core.exceptions import AtProtocolError
 from discord import Embed
-from tenacity import retry, retry_if_result, stop_after_attempt
 
 from utils.config import AnimalConfig
-from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 from utils.image import SourceImage
 from utils.logger import Logger
 from utils.webhook import send_to_webhook
 
 log = Logger("Bluesky")
 
-@retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
-async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
+async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> str | None:
     # skip if not enabled
     if not source_cfg['bluesky']['enabled']:
         log.info('Bluesky not enabled, skipping')
-        return True
+        return None
 
     log.info('Posting to Bluesky')
 
@@ -43,8 +39,7 @@ async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             exception=e
         )
 
-        log.info('Retrying')
-        return False
+        return None
     except Exception as e:
         log.error('Failed to authenticate:', traceback.format_exc())
         embed = Embed(
@@ -59,8 +54,7 @@ async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             exception=e
         )
 
-        log.info('Retrying')
-        return False
+        return None
 
     log.info('Posting image')
     try:
@@ -86,7 +80,7 @@ async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             embed=embed,
         )
 
-        return True
+        return link
     except AtProtocolError as e:
         log.error('Failed to post - API returned an error.', traceback.format_exc())
         embed = Embed(
@@ -101,8 +95,7 @@ async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             exception=e
         )
 
-        log.info('Retrying')
-        return False
+        return None
     except Exception as e:
         log.error('Failed to post:', traceback.format_exc())
         embed = Embed(
@@ -117,5 +110,4 @@ async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             exception=e
         )
 
-        log.info('Retrying')
-        return False
+        return None

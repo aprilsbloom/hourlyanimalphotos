@@ -56,6 +56,7 @@ class DiscordWebhooks(TypedDict):
   twitter: str
   tumblr: str
   bluesky: str
+  post_notification: str
 
 
 class Config:
@@ -124,7 +125,8 @@ class Config:
         webhooks=DiscordWebhooks(
           twitter=cat_discord_webhooks.get("twitter", ""),
           tumblr=cat_discord_webhooks.get("tumblr", ""),
-          bluesky=cat_discord_webhooks.get("bluesky", "")
+          bluesky=cat_discord_webhooks.get("bluesky", ""),
+          post_notification=cat_discord_webhooks.get("post_notification", "")
         )
       ),
       dog=AnimalConfig(
@@ -156,7 +158,8 @@ class Config:
         webhooks=DiscordWebhooks(
           twitter=dog_discord_webhooks.get("twitter", ""),
           tumblr=dog_discord_webhooks.get("tumblr", ""),
-          bluesky=dog_discord_webhooks.get("bluesky", "")
+          bluesky=dog_discord_webhooks.get("bluesky", ""),
+          post_notification=dog_discord_webhooks.get("post_notification", "")
         )
       )
     )

@@ -1,32 +1,27 @@
-import time
 import traceback
 
 import pytumblr
 from discord import Embed
-from tenacity import retry, retry_if_result, stop_after_attempt
 
 from utils.config import AnimalConfig, cfg
-from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 from utils.image import SourceImage
 from utils.logger import Logger
 from utils.webhook import send_to_webhook
 
 log = Logger("Tumblr")
 
-@retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
-async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
+async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> str | None:
+    webhook_url = source_cfg['webhooks']['tumblr']
+    blog_name = source_cfg['tumblr']['blogname']
+
     # skip if not enabled
     if not source_cfg['tumblr']['enabled']:
         log.info('Tumblr not enabled, skipping')
-        return True
+        return None
 
     log.info('Posting to Tumblr')
 
-    webhook_url = source_cfg['webhooks'].get('tumblr') if source_cfg.get('webhooks') else None
-
     try:
-        blogname = source_cfg['tumblr']['blogname']
-
         tumblr = pytumblr.TumblrRestClient(
             consumer_key = source_cfg['tumblr']['consumer_key'],
             consumer_secret = source_cfg['tumblr']['consumer_secret'],
@@ -47,12 +42,11 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
                 embed=embed,
                 exception=e
             )
-        log.info('Retrying')
-        return
+        return None
 
     try:
         response = tumblr.create_photo(
-            blogname = blogname,
+            blogname = blog_name,
             state = "published",
             tags = source_cfg['tumblr']['tags'],
             data = img.path
@@ -80,7 +74,7 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
                         embed=embed,
                         response=response
                     )
-                return True
+                return None
 
             log.error(f'An error occurred while posting the image (status: {status}, {status_msg}): {error}')
             if webhook_url:
@@ -96,7 +90,7 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
                     response=response
                 )
 
-            return
+            return None
     except Exception as e:
         log.error('An error occurred while posting the image:', traceback.format_exc())
 
@@ -113,10 +107,9 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
                 exception=e
             )
 
-        log.info('Retrying')
-        return
+        return None
 
-    post_url = f'https://{blogname}.tumblr.com/post/{response["id"]}'
+    post_url = f'https://{blog_name}.tumblr.com/post/{response["id"]}'
     log.success(f'Posted image to Tumblr! Link: {post_url}')
     if webhook_url:
         embed = Embed(
@@ -131,4 +124,4 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             embed=embed
         )
 
-    return True
+    return post_url

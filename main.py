@@ -3,6 +3,7 @@ import shutil
 from datetime import datetime, timedelta
 from typing import List, cast
 
+from discord import Embed
 import filetype
 
 from modules import bluesky, tumblr, twitter
@@ -11,6 +12,7 @@ from utils.config import cfg
 from utils.constants import IMG_EXTENSIONS, MAX_IMG_FETCH_RETRY, MAX_IMG_SIZE_MB
 from utils.image import SourceImage
 from utils.logger import Logger
+from utils.webhook import send_to_webhook
 
 log = Logger("Main")
 
@@ -66,7 +68,7 @@ async def post():
 
         # resize the image to be below 1 mb if applicable
         if img_data is None:
-            post_log.error(f'Failed to fetch image data: img_data is None after fetching')
+            post_log.error('Failed to fetch image data: img_data is None after fetching')
 
         img = SourceImage(cast(bytes, img_data))
         if img.get_size_mb() > MAX_IMG_SIZE_MB:
@@ -77,9 +79,33 @@ async def post():
                 img.resize(width, height, 90)
 
         # if everything is successful, post the image to all the platforms
-        await twitter(source_cfg, img, img_url)
-        await tumblr(source_cfg, img, img_url)
-        await bluesky(source_cfg, img, img_url)
+        twitter_url = await twitter(source_cfg, img, img_url)
+        tumblr_url = await tumblr(source_cfg, img, img_url)
+        bluesky_url = await bluesky(source_cfg, img, img_url)
+
+        webhook_url = source_cfg['webhooks']['post_notification']
+        if webhook_url and (twitter_url or tumblr_url or bluesky_url):
+          embed = Embed(title='Photo')
+
+          # add post urls
+          post_urls = ''
+          if twitter_url is not None:
+            post_urls += f'- [Twitter]({twitter_url})\n'
+
+          if tumblr_url is not None:
+            post_urls += f'- [Tumblr]({tumblr_url})\n'
+
+          if bluesky_url is not None:
+            post_urls += f'- [Bluesky]({bluesky_url})\n'
+
+          if post_urls:
+            embed.add_field(name='URLs', value=post_urls, inline=False)
+
+          embed.set_image(url=img_url)
+          await send_to_webhook(
+            url=webhook_url,
+            embed=embed
+          )
 
         img.cleanup()
 

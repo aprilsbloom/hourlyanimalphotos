@@ -6,9 +6,6 @@ IMG_EXTENSIONS = ["jpg", "png", "jpeg", "webp"]
 MAX_IMG_SIZE_MB: Final[int] = 1
 MAX_IMG_FETCH_RETRY: Final[int] = 3
 
-MAX_POST_RETRY: Final[int] = 3
-POST_RETRY_SLEEP: Final[int] = 5
-
 CAT_TAGS = [
   "cat",
   "cats",

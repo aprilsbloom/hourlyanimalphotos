@@ -1,27 +1,23 @@
-import time
 import traceback
 from datetime import datetime
 
 import tweepy
 from discord import Embed
-from tenacity import retry, retry_if_result, stop_after_attempt
 from tweepy import errors
 
 from utils.config import AnimalConfig
-from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 from utils.image import SourceImage
 from utils.logger import Logger
 from utils.webhook import send_to_webhook
 
 log = Logger("Twitter")
 
-# current API ratelimit says max of 17 every 24hrs
-@retry(stop=stop_after_attempt(MAX_POST_RETRY), retry = retry_if_result(lambda result: not result), sleep=lambda _: time.sleep(POST_RETRY_SLEEP))
-async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
+# current API ratelimit says max of 17 every 24hrs, therefore we need to post every 2h instead of hourly
+async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> str | None:
     # skip if not enabled
     if not source_cfg['twitter']['enabled']:
         log.info('Twitter not enabled, skipping')
-        return True
+        return None
 
     webhook_url = source_cfg['webhooks']['twitter']
 
@@ -29,7 +25,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
     current_hour = datetime.now().hour
     if current_hour % 2 != 0:
         log.info('Skipping Twitter post for this hour - posting in even hours only due to rate limits.')
-        return True
+        return None
 
     log.info('Posting to Twitter')
 
@@ -68,8 +64,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             exception=e
         )
 
-        log.info('Retrying')
-        return
+        return None
 
     # upload image
     log.info('Uploading image')
@@ -97,8 +92,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             response=upload_res
         )
 
-        log.info('Retrying')
-        return
+        return None
 
     log.success('Uploaded image!')
 
@@ -123,7 +117,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             response=post_res
         )
 
-        return True
+        return None
     except Exception as e:
         log.error('An error occured while posting the image:', traceback.format_exc())
 
@@ -140,8 +134,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             response=post_res
         )
 
-        log.info('Retrying')
-        return
+        return None
 
     # check response
     if post_res and post_res.data and not post_res.errors: # type: ignore
@@ -158,7 +151,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             url=webhook_url,
             embed=embed
         )
-        return True
+        return tweet_url
     else:
         response_errors = post_res.errors if post_res else None # type: ignore
         log.error('An error occurred while posting the image:', response_errors)
@@ -175,4 +168,4 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str):
             response=post_res
         )
 
-        return
+        return None
