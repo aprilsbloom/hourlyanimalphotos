@@ -1,15 +1,15 @@
-import traceback
 import time
+import traceback
 
 import pytumblr
 from discord import Embed
 from tenacity import retry, retry_if_result, stop_after_attempt
 
 from utils.config import AnimalConfig, cfg
-from utils.discord import send_to_webhook
+from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 from utils.image import SourceImage
 from utils.logger import Logger
-from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
+from utils.webhook import send_to_webhook
 
 log = Logger("Tumblr")
 

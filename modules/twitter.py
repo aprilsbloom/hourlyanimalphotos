@@ -4,14 +4,14 @@ from datetime import datetime
 
 import tweepy
 from discord import Embed
-from tweepy import errors
 from tenacity import retry, retry_if_result, stop_after_attempt
+from tweepy import errors
 
 from utils.config import AnimalConfig
-from utils.discord import send_to_webhook
+from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
 from utils.image import SourceImage
 from utils.logger import Logger
-from utils.constants import MAX_POST_RETRY, POST_RETRY_SLEEP
+from utils.webhook import send_to_webhook
 
 log = Logger("Twitter")
 

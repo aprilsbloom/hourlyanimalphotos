@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-import os
 import copy
 import json
+import os
 from typing import TypedDict, List, Literal
 
 from requests_oauthlib import OAuth1Session
 
-from utils.logger import Logger
 from utils.constants import CAT_TAGS, DOG_TAGS
+from utils.logger import Logger
 
 AnimalType = Literal['cat', 'dog']
 
@@ -279,7 +279,7 @@ class Config:
     oauth_response = oauth_session.parse_authorization_response(redirect_response)
     verifier = oauth_response.get('oauth_verifier')
 
-    # request final access token
+    # request the final access token
     oauth_session = OAuth1Session(
       source_cfg['tumblr']['consumer_key'],
       client_secret=source_cfg['tumblr']['consumer_secret'],

@@ -1,10 +1,12 @@
-import requests
 from copy import deepcopy
+
+import requests
 
 from sources import ImageSource
 from utils.config import Config
 from utils.constants import BASE_HEADERS, REQUEST_TIMEOUT
 from utils.logger import Logger
+
 
 class DogAPI(ImageSource):
   def __init__(self, cfg: Config):

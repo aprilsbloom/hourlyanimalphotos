@@ -1,8 +1,9 @@
 import io
 import os
-from pathlib import Path
-from PIL import Image
 import uuid
+from pathlib import Path
+
+from PIL import Image
 
 jobs_dir = Path('./jobs')
 jobs_dir.mkdir(parents=True, exist_ok=True)
