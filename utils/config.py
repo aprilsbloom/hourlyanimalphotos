@@ -85,13 +85,13 @@ class Config:
     cat_twitter = cat_config.get("twitter", {})
     cat_tumblr = cat_config.get("tumblr", {})
     cat_bluesky = cat_config.get("bluesky", {})
-    cat_discord_webhooks = cat_config.get("discord_webhooks", {})
+    cat_discord_webhooks = cat_config.get("webhooks")
 
     dog_config = loaded_cfg.get("dog", {})
     dog_twitter = dog_config.get("twitter", {})
     dog_tumblr = dog_config.get("tumblr", {})
     dog_bluesky = dog_config.get("bluesky", {})
-    dog_discord_webhooks = dog_config.get("discord_webhooks", {})
+    dog_discord_webhooks = dog_config.get("webhooks")
 
     old_cfg = copy.deepcopy(self.cfg) if hasattr(self, 'cfg') else None
 
