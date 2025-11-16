@@ -18,6 +18,9 @@ async def send_to_webhook(
   response: requests.Response | dict | None = None,
   exception: Exception | str | None = None
 ):
+  if not url:
+    return
+
   async with aiohttp.ClientSession() as sess:
     webhook = discord.Webhook.from_url(
       url=url,
