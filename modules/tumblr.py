@@ -34,7 +34,6 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> st
             embed = Embed(
                 title='Error',
                 description='Failed to authenticate to Tumblr.',
-                color=0xFF0000
             )
             await send_to_webhook(
                 url=webhook_url,
@@ -66,7 +65,6 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> st
                     embed = Embed(
                         title='Error',
                         description='Failed to post - the configured blog name is incorrect.',
-                        color=0xFF0000
                     )
                     await send_to_webhook(
                         url=webhook_url,
@@ -81,7 +79,6 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> st
                 embed = Embed(
                     title='Error',
                     description='Failed to post - Tumblr returned an error.',
-                    color=0xFF0000
                 )
                 await send_to_webhook(
                     url=webhook_url,
@@ -98,7 +95,6 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> st
             embed = Embed(
                 title='Error',
                 description='Failed to post.',
-                color=0xFF0000
             )
             await send_to_webhook(
                 url=webhook_url,
@@ -115,7 +111,6 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> st
         embed = Embed(
             title='Success',
             description='Successfully posted.',
-            color=0x00FF00
         )
         embed.add_field(name='URL', value=post_url, inline=False)
         embed.set_image(url=img_url)

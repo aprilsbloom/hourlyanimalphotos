@@ -55,7 +55,6 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         embed = Embed(
             title='Error',
             description='Failed to authenticate.',
-            color=0xFF0000
         )
         await send_to_webhook(
             url=webhook_url,
@@ -82,7 +81,6 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         embed = Embed(
             title='Error',
             description='Failed to upload image to Twitter.',
-            color=0xFF0000
         )
         await send_to_webhook(
             url=webhook_url,
@@ -107,7 +105,6 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         embed = Embed(
             title='Error',
             description='Failed to post - Rate limit exceeded.',
-            color=0xFF0000
         )
         await send_to_webhook(
             url=webhook_url,
@@ -124,7 +121,6 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         embed = Embed(
             title='Error',
             description='Failed to post.',
-            color=0xFF0000
         )
         await send_to_webhook(
             url=webhook_url,
@@ -143,7 +139,6 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         embed = Embed(
             title='Success',
             description='Successfully posted.',
-            color=0x00FF00
         )
         embed.add_field(name='URL', value=tweet_url)
         embed.set_image(url=img_url)
@@ -159,7 +154,6 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         embed = Embed(
             title='Error',
             description='Failed to post.',
-            color=0xFF0000
         )
         await send_to_webhook(
             url=webhook_url,
