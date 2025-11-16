@@ -16,7 +16,7 @@ class ImageSource(ABC):
     self.cfg_key = cfg_key
 
   @abstractmethod
-  def fetch_img(self) -> bytes | None:
+  def fetch_img(self) -> tuple[bytes | None, str | None]:
     pass
 
   @abstractmethod

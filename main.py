@@ -18,6 +18,7 @@ async def post():
     post_log = Logger("Post")
 
     img_data = None
+    img_url = None
     sources: List[ImageSource] = [
         CatAPI(cfg),
         DogAPI(cfg),
@@ -42,7 +43,7 @@ async def post():
         # fetch & validate img
         img_fetch_retry = 0
         while img_fetch_retry < MAX_IMG_FETCH_RETRY:
-            img_data = source.fetch_img()
+            img_data, img_url = source.fetch_img()
 
             # if no img data, retry
             if not img_data or len(img_data) == 0:
@@ -76,9 +77,9 @@ async def post():
                 img.resize(width, height, 90)
 
         # if everything is successful, post the image to all the platforms
-        await twitter(source_cfg, img)
-        await tumblr(source_cfg, img)
-        await bluesky(source_cfg, img)
+        await twitter(source_cfg, img, img_url)
+        await tumblr(source_cfg, img, img_url)
+        await bluesky(source_cfg, img, img_url)
 
         img.cleanup()
 

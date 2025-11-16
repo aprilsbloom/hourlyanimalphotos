@@ -16,12 +16,12 @@ class CatAPI(ImageSource):
     self.url = 'https://api.thecatapi.com/v1/images/search?mime_types=jpg,png'
     self.logger = Logger(self.name)
 
-  def fetch_img(self) -> bytes | None:
+  def fetch_img(self) -> tuple[bytes | None, str | None]:
     # get url
     url = self.fetch_img_url()
     if not url:
       self.logger.error(f'Failed to fetch image from {self.url}: No URL was returned.')
-      return None
+      return None, None
 
     self.logger.success(f'Fetched image! Got: {url}')
 
@@ -29,9 +29,9 @@ class CatAPI(ImageSource):
     res = requests.get(url, headers = BASE_HEADERS, timeout = REQUEST_TIMEOUT)
     if res.status_code != 200:
       self.logger.error(f'Failed to fetch image from {self.url}: Status code {res.status_code}\n{res.text}')
-      return None
+      return None, None
 
-    return res.content
+    return res.content, url
 
   def fetch_img_url(self) -> str:
     cfg = self.cfg.cfg[self.cfg_key]
