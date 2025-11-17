@@ -66,17 +66,6 @@ async def bluesky(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
         link = f'https://bsky.app/profile/{source_cfg["bluesky"]["username"]}/{post_id}'
         log.success(f'Posted image to Bluesky! Link: {link}')
 
-        embed = Embed(
-            title='Success',
-            description='Successfully posted.',
-        )
-        embed.add_field(name='URL', value=link)
-        embed.set_image(url=img_url)
-        await send_to_webhook(
-            url=source_cfg['webhooks']['bluesky'],
-            embed=embed,
-        )
-
         return link
     except AtProtocolError as e:
         log.error('Failed to post - API returned an error.', traceback.format_exc())

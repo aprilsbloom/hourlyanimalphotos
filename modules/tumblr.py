@@ -107,16 +107,5 @@ async def tumblr(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> st
 
     post_url = f'https://{blog_name}.tumblr.com/post/{response["id"]}'
     log.success(f'Posted image to Tumblr! Link: {post_url}')
-    if webhook_url:
-        embed = Embed(
-            title='Success',
-            description='Successfully posted.',
-        )
-        embed.add_field(name='URL', value=post_url, inline=False)
-        embed.set_image(url=img_url)
-        await send_to_webhook(
-            url=webhook_url,
-            embed=embed
-        )
 
     return post_url

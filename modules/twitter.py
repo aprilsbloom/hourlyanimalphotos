@@ -136,16 +136,7 @@ async def twitter(source_cfg: AnimalConfig, img: SourceImage, img_url: str) -> s
     if post_res and post_res.data and not post_res.errors: # type: ignore
         tweet_url = f'https://x.com/i/status/{post_res.data["id"]}' # type: ignore
         log.success(f'Posted image to Twitter! Link: {tweet_url}')
-        embed = Embed(
-            title='Success',
-            description='Successfully posted.',
-        )
-        embed.add_field(name='URL', value=tweet_url)
-        embed.set_image(url=img_url)
-        await send_to_webhook(
-            url=webhook_url,
-            embed=embed
-        )
+
         return tweet_url
     else:
         response_errors = post_res.errors if post_res else None # type: ignore
