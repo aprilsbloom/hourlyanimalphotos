@@ -67,10 +67,11 @@ async def send_to_webhook(
 
     # add the exception to the file array
     if exception:
-      if isinstance(exception, str):
-        exc_str = exception
+      if isinstance(exception, Exception):
+        tb_str = traceback.format_exception(exception)
+        exc_str = '\n'.join(tb_str)
       else:
-        exc_str = traceback.format_exception(exception)
+        exc_str = str(exception)
 
       files.append(discord.File(
         fp=io.BytesIO(
