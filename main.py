@@ -62,13 +62,34 @@ async def post():
 
             break
 
+
         if img_fetch_retry == MAX_IMG_FETCH_RETRY:
             post_log.error(f'Failed to fetch image from "{source.cfg_key}" ("{source.name}"). Reached retry limit ({MAX_IMG_FETCH_RETRY}).')
+            embed = Embed(
+                title='Error',
+                description=f'Failed to fetch image from "{source.cfg_key}" ("{source.name}"). Reached retry limit ({MAX_IMG_FETCH_RETRY}).',
+            )
+            await send_to_webhook(
+                url=source_cfg["webhooks"]["misc"],
+                content='@everyone',
+                embed=embed
+            )
             continue
 
         # resize the image to be below 1 mb if applicable
         if img_data is None:
             post_log.error('Failed to fetch image data: img_data is None after fetching')
+            embed = Embed(
+                title='Error',
+                description=f'Failed to fetch image data: `img_data` is `None` after fetching.',
+            )
+            await send_to_webhook(
+                url=source_cfg["webhooks"]["misc"],
+                content='@everyone',
+                embed=embed
+            )
+            continue
+
 
         img = SourceImage(cast(bytes, img_data))
         if img.get_size_mb() > MAX_IMG_SIZE_MB:

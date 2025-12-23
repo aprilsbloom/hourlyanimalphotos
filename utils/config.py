@@ -5,8 +5,6 @@ import json
 import os
 from typing import TypedDict, List, Literal
 
-from requests_oauthlib import OAuth1Session
-
 from utils.constants import CAT_TAGS, DOG_TAGS
 from utils.logger import Logger
 
@@ -56,6 +54,7 @@ class DiscordWebhooks(TypedDict):
   twitter: str
   tumblr: str
   bluesky: str
+  misc: str
   post_notification: str
 
 
@@ -126,6 +125,7 @@ class Config:
           twitter=cat_discord_webhooks.get("twitter", ""),
           tumblr=cat_discord_webhooks.get("tumblr", ""),
           bluesky=cat_discord_webhooks.get("bluesky", ""),
+          misc=cat_discord_webhooks.get("misc", ""),
           post_notification=cat_discord_webhooks.get("post_notification", "")
         )
       ),
@@ -159,6 +159,7 @@ class Config:
           twitter=dog_discord_webhooks.get("twitter", ""),
           tumblr=dog_discord_webhooks.get("tumblr", ""),
           bluesky=dog_discord_webhooks.get("bluesky", ""),
+          misc=dog_discord_webhooks.get("misc", ""),
           post_notification=dog_discord_webhooks.get("post_notification", "")
         )
       )
@@ -223,9 +224,6 @@ class Config:
 
           exit_needed = True
 
-        if not exit_needed and (not source_cfg['tumblr']['oauth_token'] or not source_cfg['tumblr']['oauth_token_secret']):
-          self.init_tumblr_oauth(source_cfg)
-
       # bluesky
       if source_cfg['bluesky']['enabled']:
         bluesky_keys = ['username', 'app_password']
@@ -258,45 +256,6 @@ class Config:
 
     if exit_needed and should_exit:
       os._exit(1)
-
-  def init_tumblr_oauth(self, source_cfg: AnimalConfig) -> None:
-    tumblr_log = Logger("Tumblr")
-    request_token_url = 'http://www.tumblr.com/oauth/request_token'
-    authorize_url = 'http://www.tumblr.com/oauth/authorize'
-    access_token_url = 'http://www.tumblr.com/oauth/access_token'
-
-    # obtain request token
-    oauth_session = OAuth1Session(source_cfg['tumblr']['consumer_key'], client_secret=source_cfg['tumblr']['consumer_secret'])
-    fetch_response = oauth_session.fetch_request_token(request_token_url)
-
-    resource_owner_key = fetch_response.get('oauth_token')
-    resource_owner_secret = fetch_response.get('oauth_token_secret')
-
-    # redirect to authentication page
-    full_authorize_url = oauth_session.authorization_url(authorize_url)
-    tumblr_log.info(f'Oauth tokens are missing for source "{source_cfg["name"]}".')
-    tumblr_log.info(f'Please visit this URL and authorize (make sure you are signed into blog "{source_cfg["tumblr"]["blogname"]}"): {full_authorize_url}')
-    redirect_response = tumblr_log.input('Paste the full redirect URL here: ').strip()
-
-    # retrieve verifier
-    oauth_response = oauth_session.parse_authorization_response(redirect_response)
-    verifier = oauth_response.get('oauth_verifier')
-
-    # request the final access token
-    oauth_session = OAuth1Session(
-      source_cfg['tumblr']['consumer_key'],
-      client_secret=source_cfg['tumblr']['consumer_secret'],
-      resource_owner_key=resource_owner_key,
-      resource_owner_secret=resource_owner_secret,
-      verifier=verifier
-    )
-
-    oauth_tokens = oauth_session.fetch_access_token(access_token_url)
-    source_cfg['tumblr']['oauth_token'] = oauth_tokens.get('oauth_token', '')
-    source_cfg['tumblr']['oauth_token_secret'] = oauth_tokens.get('oauth_token_secret', '')
-    self.save()
-
-    tumblr_log.success('Tumblr oauth token and secret have been set.')
 
   def __str__(self) -> str:
     return json.dumps(self.cfg, indent=2, ensure_ascii=False)
